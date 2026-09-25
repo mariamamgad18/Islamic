@@ -1,507 +1,122 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:islamic/l10n/app_localizations.dart';
 
-import 'Features/Ui/Azkar/azkar_page.dart';
-import 'Features/Ui/Azkar/cubit/azkar_view_model.dart';
-import 'Features/Ui/Nearby_Mosques_screen/nearby_mosques_screen.dart';
-import 'Features/Ui/Reminders/reminders_page.dart';
-import 'Features/Ui/Sebha/sebha_screen.dart';
-import 'Features/Ui/home_screen/home_screen.dart';
-import 'Features/Ui/language_selection_screen/language_selection_screen.dart';
-import 'Features/Ui/location_permission_screen/location_permission_screen.dart';
-import 'Features/Ui/on_boarding_screens/on_boarding_screens.dart';
-import 'Features/Ui/prayer_times_screen/athan_screen.dart';
-import 'Features/Ui/prayer_times_screen/prayer_times_screen.dart';
-import 'Features/Ui/qebla/qebla_screen.dart';
-import 'Features/Ui/quran/quran_list_page.dart';
-import 'Features/Ui/reminders_inside_screen/reminders_Inside_screen.dart';
-import 'Features/Ui/setting/setting_screen.dart';
-import 'Features/Ui/splash_screen/splash_screen.dart';
-import 'core/DI/injection.dart';
-import 'core/Services/notification_service.dart';
-import 'core/Utils/app_routes.dart';
-import 'core/Utils/language_manager.dart';
-
-
-// =========================================================
-// ATHAN ACTIVITY METHOD CHANNEL
-// =========================================================
-//
-// Used by AthanActivity <-> Flutter
-// For:
-// - Getting athan data
-// - Stopping athan
-//
-
-const MethodChannel athanActivityChannel =
-MethodChannel('athan_activity_channel');
-
-
-// =========================================================
-// NAVIGATOR KEY
-// =========================================================
-
-final GlobalKey<NavigatorState> navigatorKey =
-GlobalKey<NavigatorState>();
-
-
-// =========================================================
-// MAIN
-// =========================================================
-
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // =======================================================
-  // LANGUAGE
-  // =======================================================
-
-  await LanguageManager.loadSavedLanguage();
-
-  // =======================================================
-  // NOTIFICATIONS
-  // =======================================================
-
-  await NotificationService.init();
-
-  // =======================================================
-  // DEPENDENCIES
-  // =======================================================
-
-  await configureDependencies();
-
-  // =======================================================
-  // CHECK IF APP WAS OPENED FROM NOTIFICATION
-  // =======================================================
-
-  final NotificationAppLaunchDetails?
-  notificationAppLaunchDetails =
-  await NotificationService
-      .flutterLocalNotificationsPlugin
-      .getNotificationAppLaunchDetails();
-
-  String? athanPayload;
-
-  if (notificationAppLaunchDetails?.didNotificationLaunchApp ??
-      false) {
-    athanPayload =
-        notificationAppLaunchDetails
-            ?.notificationResponse
-            ?.payload;
-  }
-
-  debugPrint(
-    'Athan Payload: $athanPayload',
-  );
-
-  // =======================================================
-  // RUN APP
-  // =======================================================
-
-  runApp(
-    MyApp(
-      athanPayload: athanPayload,
-    ),
-  );
+void main() {
+  runApp(const MyApp());
 }
 
-
-// =========================================================
-// MY APP
-// =========================================================
-
 class MyApp extends StatelessWidget {
-  const MyApp({
-    super.key,
-    this.athanPayload,
-  });
+  const MyApp({super.key});
 
-  final String? athanPayload;
-
-
-// =========================================================
-// GET ATHAN SCREEN FROM NOTIFICATION PAYLOAD
-// =========================================================
-
-  AthanScreen? _getAthanScreen() {
-    if (athanPayload == null ||
-        !athanPayload!.startsWith('athan:')) {
-      return null;
-    }
-
-    final List<String> parts =
-    athanPayload!.split(':');
-
-    if (parts.length < 3) {
-      return null;
-    }
-
-    final int? athanId =
-    int.tryParse(parts[1]);
-
-    if (athanId == null) {
-      return null;
-    }
-
-    final String prayerName =
-    parts.sublist(2).join(':');
-
-    return AthanScreen(
-      athanId: athanId,
-      prayerName: prayerName,
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        // This is the theme of your application.
+        //
+        // TRY THIS: Try running your application with "flutter run". You'll see
+        // the application has a purple toolbar. Then, without quitting the app,
+        // try changing the seedColor in the colorScheme below to Colors.green
+        // and then invoke "hot reload" (save your changes or press the "hot
+        // reload" button in a Flutter-supported IDE, or press "r" if you used
+        // the command line to start the app).
+        //
+        // Notice that the counter didn't reset back to zero; the application
+        // state is not lost during the reload. To reset the state, use hot
+        // restart instead.
+        //
+        // This works for code too, not just values: Most code changes can be
+        // tested with just a hot reload.
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      ),
+      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
+}
 
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
 
-// =========================================================
-// BUILD
-// =========================================================
+  // This widget is the home page of your application. It is stateful, meaning
+  // that it has a State object (defined below) that contains fields that affect
+  // how it looks.
+
+  // This class is the configuration for the state. It holds the values (in this
+  // case the title) provided by the parent (in this case the App widget) and
+  // used by the build method of the State. Fields in a Widget subclass are
+  // always marked "final".
+
+  final String title;
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  int _counter = 0;
+
+  void _incrementCounter() {
+    setState(() {
+      // This call to setState tells the Flutter framework that something has
+      // changed in this State, which causes it to rerun the build method below
+      // so that the display can reflect the updated values. If we changed
+      // _counter without calling setState(), then the build method would not be
+      // called again, and so nothing would appear to happen.
+      _counter++;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<Locale>(
-      valueListenable:
-      LanguageManager.localeNotifier,
-      builder: (context,
-          locale,
-          child,) {
-        return ScreenUtilInit(
-          designSize: const Size(
-            430,
-            932,
-          ),
-          minTextAdapt: true,
-          splitScreenMode: true,
-          builder: (context,
-              child,) {
-            final AthanScreen? athanScreen =
-            _getAthanScreen();
-
-            return MaterialApp(
-
-              // =================================================
-              // BASIC SETTINGS
-              // =================================================
-
-              debugShowCheckedModeBanner: false,
-
-              navigatorKey: navigatorKey,
-
-              // =================================================
-              // LOCALIZATION
-              // =================================================
-
-              locale: locale,
-
-              localizationsDelegates: const [
-                AppLocalizations.delegate,
-
-                GlobalMaterialLocalizations.delegate,
-
-                GlobalWidgetsLocalizations.delegate,
-
-                GlobalCupertinoLocalizations.delegate,
-              ],
-
-              supportedLocales: const [
-                Locale('en'),
-                Locale('fr'),
-                Locale('ur'),
-                Locale('ar'),
-              ],
-
-              // =================================================
-              // HOME
-              // =================================================
-
-              home: athanScreen ??
-                  SplashScreen(),
-
-              // =================================================
-              // ROUTES
-              // =================================================
-
-              routes: {
-
-                // -------------------------------------------------
-                // SPLASH
-                // -------------------------------------------------
-
-                AppRoutes.SplashScreenRoutename:
-                    (context) => SplashScreen(),
-
-                // -------------------------------------------------
-                // ONBOARDING
-                // -------------------------------------------------
-
-                AppRoutes.OnBoardingScreenRoutename:
-                    (context) => OnBoardingScreens(),
-
-                // -------------------------------------------------
-                // LANGUAGE
-                // -------------------------------------------------
-
-                AppRoutes.LanguageSelectionScreenRoutename:
-                    (context) =>
-                    LanguageSelectionScreen(),
-
-                // -------------------------------------------------
-                // LOCATION PERMISSION
-                // -------------------------------------------------
-
-                AppRoutes.LocationPermissionScreenRoutename:
-                    (context) =>
-                    LocationPermissionScreen(),
-
-                // -------------------------------------------------
-                // HOME
-                // -------------------------------------------------
-
-                AppRoutes.HomeScreenRoutename:
-                    (context) => HomeScreen(),
-
-                // -------------------------------------------------
-                // QURAN
-                // -------------------------------------------------
-
-                AppRoutes.QuranScreenRoutename:
-                    (context) => QuranListPage(),
-
-                // -------------------------------------------------
-                // AZKAR
-                // -------------------------------------------------
-
-                AppRoutes.AzkarScreenRoutename:
-                    (context) =>
-                    BlocProvider(
-                      create: (context) =>
-                          getIt<AzkarViewModel>(),
-                      child: const AzkarPage(),
-                    ),
-
-                // -------------------------------------------------
-                // REMINDERS
-                // -------------------------------------------------
-
-                AppRoutes.RemindersScreenRoutename:
-                    (context) => RemindersPage(),
-
-                // -------------------------------------------------
-                // ADD REMINDER
-                // -------------------------------------------------
-
-                AppRoutes.RemindersInsideScreenRoutename:
-                    (context) =>
-                    RemindersInsideScreen(),
-
-                // -------------------------------------------------
-                // SETTINGS
-                // -------------------------------------------------
-
-                AppRoutes.settingScreenRoutename:
-                    (context) => SettingScreen(),
-
-                // -------------------------------------------------
-                // SEBHA
-                // -------------------------------------------------
-
-                AppRoutes.TasbihScreenRoutename:
-                    (context) => SebhaScreen(),
-
-                // -------------------------------------------------
-                // QIBLA
-                // -------------------------------------------------
-
-                AppRoutes.QiblaScreenRoutename:
-                    (context) => QeblaScreen(),
-
-                // -------------------------------------------------
-                // PRAYER TIMES
-                // -------------------------------------------------
-
-                AppRoutes.AzanScreenRoutename:
-                    (context) =>
-                    PrayerTimesScreen(),
-
-                // -------------------------------------------------
-                // ATHAN
-                // -------------------------------------------------
-
-                '/athan':
-                    (context) =>
-                const AthanLauncher(),
-
-                // -------------------------------------------------
-                // NEARBY MOSQUES
-                // -------------------------------------------------
-
-                AppRoutes.NearbyMosquesScreenRoutename:
-                    (context) =>
-                    NearbyMosquesScreen(),
-              },
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-
-// =========================================================
-// ATHAN LAUNCHER
-// =========================================================
-//
-// This screen is opened inside AthanActivity.
-//
-// It gets:
-// - athanId
-// - prayerName
-//
-// from Kotlin through MethodChannel.
-//
-// Then it displays AthanScreen.
-//
-
-class AthanLauncher extends StatefulWidget {
-  const AthanLauncher({
-    super.key,
-  });
-
-  @override
-  State<AthanLauncher> createState() =>
-      _AthanLauncherState();
-}
-
-
-class _AthanLauncherState extends State<AthanLauncher> {
-
-  int? athanId;
-
-  String prayerName = '';
-
-  bool isLoading = true;
-
-
-  // =========================================================
-  // INIT
-  // =========================================================
-
-  @override
-  void initState() {
-    super.initState();
-
-    _getAthanData();
-  }
-
-
-  // =========================================================
-  // GET ATHAN DATA
-  // =========================================================
-
-  Future<void> _getAthanData() async {
-    try {
-      final dynamic result =
-      await athanActivityChannel.invokeMethod(
-        'getAthanData',
-      );
-
-      if (result is Map) {
-        final dynamic id =
-        result['athanId'];
-
-        final dynamic name =
-        result['prayerName'];
-
-        if (mounted) {
-          setState(() {
-            athanId = id is int
-                ? id
-                : int.tryParse(
-              id?.toString() ?? '',
-            );
-
-            prayerName =
-                name?.toString() ?? '';
-
-            isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            isLoading = false;
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint(
-        'ERROR GETTING ATHAN DATA: $e',
-      );
-
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
-    }
-  }
-
-
-  // =========================================================
-  // BUILD
-  // =========================================================
-
-  @override
-  Widget build(BuildContext context,) {
-    if (isLoading) {
-      return const Scaffold(
-
-        backgroundColor: Colors.black,
-
-        body: Center(
-
-          child: CircularProgressIndicator(
-            color: Colors.white,
-          ),
-
-        ),
-      );
-    }
-
-
-    if (athanId == null) {
-      return Scaffold(
-
-        backgroundColor: Colors.black,
-
-        body: Center(
-
-          child: Text(
-
-            'حدث خطأ في تشغيل الأذان',
-
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18.sp,
-              fontFamily: 'Cairo',
+    // This method is rerun every time setState is called, for instance as done
+    // by the _incrementCounter method above.
+    //
+    // The Flutter framework has been optimized to make rerunning build methods
+    // fast, so that you can just rebuild anything that needs updating rather
+    // than having to individually change instances of widgets.
+    return Scaffold(
+      appBar: AppBar(
+        // TRY THIS: Try changing the color here to a specific color (to
+        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
+        // change color while the other colors stay the same.
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        // Here we take the value from the MyHomePage object that was created by
+        // the App.build method, and use it to set our appbar title.
+        title: Text(widget.title),
+      ),
+      body: Center(
+        // Center is a layout widget. It takes a single child and positions it
+        // in the middle of the parent.
+        child: Column(
+          // Column is also a layout widget. It takes a list of children and
+          // arranges them vertically. By default, it sizes itself to fit its
+          // children horizontally, and tries to be as tall as its parent.
+          //
+          // Column has various properties to control how it sizes itself and
+          // how it positions its children. Here we use mainAxisAlignment to
+          // center the children vertically; the main axis here is the vertical
+          // axis because Columns are vertical (the cross axis would be
+          // horizontal).
+          //
+          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
+          // action in the IDE, or press "p" in the console), to see the
+          // wireframe for each widget.
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Text('You have pushed the button this many times:'),
+            Text(
+              '$_counter',
+              style: Theme.of(context).textTheme.headlineMedium,
             ),
-
-          ),
-
+          ],
         ),
-      );
-    }
-
-
-    return AthanScreen(
-      athanId: athanId!,
-      prayerName: prayerName,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _incrementCounter,
+        tooltip: 'Increment',
+        child: const Icon(Icons.add),
+      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
