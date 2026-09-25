@@ -26,7 +26,7 @@ class SurahAyahSafhaContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 119.w,
-      height: 142.h,
+      height: 141.h,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: bgColor,

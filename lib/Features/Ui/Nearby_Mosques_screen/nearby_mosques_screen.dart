@@ -1,93 +1,122 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:islamic/Features/Ui/Nearby_Mosques_screen/map_container.dart';
-import 'package:islamic/Features/Ui/Sebha/mosque_container.dart';
-import 'package:islamic/Features/Ui/home_screen/ayah_container.dart';
-import 'package:islamic/core/Utils/app_colors.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../core/DI/injection.dart';
+import 'cubit/nearby_mosques_states.dart';
+import 'cubit/nearby_mosques_view_model.dart';
 
 class NearbyMosquesScreen extends StatelessWidget {
-  const NearbyMosquesScreen({super.key});
+  const NearbyMosquesScreen({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.semiwhiteColor,
-      body: Column(
-        children: [
-          //todo: Green Container:
-          Container(
-            width: 430.w,
-            height: 132.h,
-            decoration: BoxDecoration(color: AppColors.DarkGreenColor),
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 25.0.h, horizontal: 25.w),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+    return BlocProvider(
+      create: (_) =>
+      getIt<NearbyMosquesViewModel>()
+        ..getNearbyMosques(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Nearby Mosques'),
+        ),
+        body: BlocBuilder<
+            NearbyMosquesViewModel,
+            NearbyMosquesState>(
+          builder: (context, state) {
+            // =========================
+            // Loading
+            // =========================
+
+            if (state is NearbyMosquesLoadingState) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+
+            // =========================
+            // Error
+            // =========================
+
+            if (state is NearbyMosquesErrorState) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        "المساجد القريبة",
-                        style: TextStyle(
-                          fontSize: 24,
-                          color: AppColors.whiteColor,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: "Cairo",
-                        ),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 50,
                       ),
-                      SizedBox(width: 12.w),
-                      Icon(
-                        Icons.arrow_forward,
-                        size: 18,
-                        color: AppColors.whiteColor,
+
+                      const SizedBox(height: 16),
+
+                      Text(
+                        state.message,
+                        textAlign: TextAlign.center,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      ElevatedButton(
+                        onPressed: () {
+                          NearbyMosquesViewModel
+                              .get(context)
+                              .getNearbyMosques();
+                        },
+                        child: const Text('Retry'),
                       ),
                     ],
                   ),
-                  SizedBox(height: 8.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                ),
+              );
+            }
 
-                    children: [
-                      Text(
-                        "الموقع الحالي: الرياض",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: AppColors.whiteColor,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: "Cairo",
+            // =========================
+            // Success
+            // =========================
+
+            if (state is NearbyMosquesSuccessState) {
+              if (state.mosques.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'No mosques found nearby',
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: state.mosques.length,
+                itemBuilder: (context, index) {
+                  final mosque = state.mosques[index];
+
+                  return Card(
+                    margin: const EdgeInsets.only(
+                      bottom: 12,
+                    ),
+                    child: ListTile(
+                      leading: const CircleAvatar(
+                        child: Icon(
+                          Icons.mosque,
                         ),
                       ),
-                      SizedBox(width: 8.w),
-                      Icon(
-                        Icons.location_on_outlined,
-                        size: 14,
-                        color: AppColors.whiteColor,
+                      title: Text(
+                        mosque.name,
                       ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          MapContainer(),
-          MosqueContainer(
-            address: "شارع الملك فهد، الرياض",
-            distanceBetweenYourCurrentLocationAndMosque: 0.5,
-            MosqueName: "الجامع الكبير",
-            counter: 1,
-          ),
+                      subtitle: Text(
+                        mosque.address,
+                      ),
+                    ),
+                  );
+                },
+              );
+            }
 
-          Spacer(),
-          AyahContainerr(
-            ayahWidth: 382,
-            ayahHeight: 280,
-            topPadding: 16,
-            title: 'حديث شريف',
-            subTitle:
-                "مَنْ غَدَا إِلَى الْمَسْجِدِ أَوْ رَاحَ، أَعَدَّ اللَّهُ لَهُ فِي الْجَنَّةِ نُزُلًا",
-            lastLine: "رواه البخاري ومسلم",
-          ),
-        ],
+            return const SizedBox();
+          },
+        ),
       ),
     );
   }

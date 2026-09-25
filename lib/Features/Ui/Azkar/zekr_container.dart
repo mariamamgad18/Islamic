@@ -1,121 +1,139 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islamic/core/Utils/app_colors.dart';
 
-class ZekrContainer extends StatefulWidget {
-  ZekrContainer({
+import '../../../../Domain/entities/response/azkar/azkar.dart';
+import 'cubit/azkar_states.dart';
+import 'cubit/azkar_view_model.dart';
+
+class ZekrContainer extends StatelessWidget {
+  final Azkar azkar;
+
+  const ZekrContainer({
     super.key,
-    required this.hadeeth,
-    required this.rawaah,
-    required this.hadeethCount,
+    required this.azkar,
   });
-
-  String hadeeth;
-  String rawaah;
-  String hadeethCount;
-
-  @override
-  State<ZekrContainer> createState() => _ZekrContainerState();
-}
-
-class _ZekrContainerState extends State<ZekrContainer> {
-  bool isFavorite = false;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 10.h),
-      child: Container(
-        width: 375.w,
-        //   height: 140.h,
-        decoration: BoxDecoration(
-          color: AppColors.whiteColor,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Row(
-            children: [
-              InkWell(
-                onTap: () {
-                  setState(() {
-                    isFavorite = !isFavorite;
-                  });
-                },
-                child:
-                    isFavorite
-                        ? Icon(Icons.favorite, color: AppColors.hotRed)
-                        : Icon(
-                          Icons.favorite_border,
-                          color: AppColors.GreyColor,
-                        ),
-              ),
+    return BlocBuilder<AzkarViewModel, AzkarState>(
+      builder: (context, state) {
+        final viewModel =
+        context.read<AzkarViewModel>();
 
-              SizedBox(width: 30),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      widget.hadeeth,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: AppColors.BlackColor,
-                        fontWeight: FontWeight.w400,
-                        fontFamily: "Cairo",
-                      ),
+        final bool isFavorite =
+        viewModel.isFavorite(azkar);
+
+
+        return Padding(
+          padding: EdgeInsets.symmetric(
+            vertical: 10.h,
+          ),
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.whiteColor,
+              borderRadius:
+              BorderRadius.circular(20.r),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(20.w),
+              child: Row(
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
+                children: [
+// =========================
+// Favorite
+// =========================
+
+                  InkWell(
+                    onTap: () async {
+                      await viewModel.toggleFavorite(
+                        azkar,
+                      );
+                    },
+                    child: Icon(
+                      isFavorite
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                      color: isFavorite
+                          ? AppColors.hotRed
+                          : AppColors.GreyColor,
                     ),
+                  ),
 
-                    SizedBox(height: 8.h),
+                  SizedBox(width: 30.w),
 
-                    Container(
-                      height: 22.h,
-                      //width: 70.81.w,
-                      decoration: BoxDecoration(
-                        color: AppColors.lightOrange,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Expanded(
-                        child: Text(
-                          widget.rawaah,
+// =========================
+// Text
+// =========================
+
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment:
+                      CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          azkar.text,
+                          textAlign:
+                          TextAlign.right,
                           style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.BlackColor,
-                            fontWeight: FontWeight.w400,
+                            fontSize: 16.sp,
+                            color:
+                            AppColors.BlackColor,
+                            fontWeight:
+                            FontWeight.w400,
                             fontFamily: "Cairo",
                           ),
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
 
-              SizedBox(width: 12.w),
+                        SizedBox(height: 8.h),
 
-              Container(
-                height: 40.h,
-                width: 40.w,
-                decoration: BoxDecoration(
-                  color: AppColors.lightOrange,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Center(
-                  child: Text(
-                    widget.hadeethCount,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppColors.whiteColor,
-                      fontWeight: FontWeight.w400,
-                      fontFamily: "Cairo",
+// =========================
+// Reference
+// =========================
+                      ],
                     ),
                   ),
-                ),
+
+                  SizedBox(width: 12.w),
+
+// =========================
+// Count
+// =========================
+
+                  Container(
+                    height: 40.h,
+                    width: 40.w,
+                    decoration: BoxDecoration(
+                      color:
+                      AppColors.lightOrange,
+                      borderRadius:
+                      BorderRadius.circular(
+                        20.r,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        azkar.count.toString(),
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          color:
+                          AppColors.whiteColor,
+                          fontWeight:
+                          FontWeight.w400,
+                          fontFamily: "Cairo",
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

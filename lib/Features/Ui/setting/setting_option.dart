@@ -22,7 +22,10 @@ class SettingOption extends StatelessWidget {
       width: 390.w,
       color: AppColors.whiteColor,
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 16.0.h, horizontal: 16.w),
+        padding: EdgeInsets.symmetric(
+          vertical: 16.0.h,
+          horizontal: 16.w,
+        ),
         child: Row(
           children: [
             buttonOrRow,
@@ -59,7 +62,9 @@ class SettingOption extends StatelessWidget {
                 color: AppColors.semiwhiteColor,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Image(image: AssetImage(SettingImage)),
+              child: Image(
+                image: AssetImage(SettingImage),
+              ),
             ),
           ],
         ),

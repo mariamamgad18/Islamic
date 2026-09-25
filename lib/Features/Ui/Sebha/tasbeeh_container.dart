@@ -20,7 +20,7 @@ class TasbeehContainer extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 181.5.w,
-        height: 64.h,
+        height: 80.h,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           color: AppColors.whiteColor,
@@ -35,16 +35,20 @@ class TasbeehContainer extends StatelessWidget {
                 ? Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      tasbeehTitle,
-                      style: TextStyle(
-                        fontSize: 24,
-                        color: AppColors.BlackColor,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: "Amiri",
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          tasbeehTitle,
+                          style: TextStyle(
+                            fontSize: 20.sp,
+                            color: AppColors.BlackColor,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: "Amiri",
+                          ),
+                        ),
                       ),
                     ),
-                    SizedBox(height: 8.h),
+                    SizedBox(height: 2.h),
                     Container(
                       width: 6.w,
                       height: 6.h,
@@ -55,14 +59,16 @@ class TasbeehContainer extends StatelessWidget {
                     ),
                   ],
                 )
-                : Center(
-                  child: Text(
-                    tasbeehTitle,
-                    style: TextStyle(
-                      fontSize: 24,
-                      color: AppColors.BlackColor,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: "Amiri",
+                : Expanded(
+                  child: Center(
+                    child: Text(
+                      tasbeehTitle,
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: AppColors.BlackColor,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: "Amiri",
+                      ),
                     ),
                   ),
                 ),

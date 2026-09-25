@@ -1,40 +1,68 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:islamic/Domain/entities/response/quran_info/chapter.dart';
 import 'package:islamic/core/Utils/app_colors.dart';
 import 'package:islamic/core/Utils/app_images.dart';
+import 'package:islamic/l10n/app_localizations.dart';
 
 import '../quran_inside/quran_inside_page.dart';
 
 class SurahContainer extends StatelessWidget {
-  SurahContainer({
-    super.key,
-    required this.SurahArabicName,
-    required this.MakiaOrMadenia,
-    required this.AyahCount,
-    required this.SurahENglishName,
-    required this.counter,
-  });
+  final Chapter chapter;
 
-  String counter;
-  String SurahArabicName;
-  String SurahENglishName;
-  String AyahCount;
-  String MakiaOrMadenia;
+// =========================================================
+// All chapters from API
+// Used for Previous / Next Surah navigation
+// =========================================================
+
+  final List<Chapter> chapters;
+
+  const SurahContainer({
+    super.key,
+    required this.chapter,
+    required this.chapters,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final localizations =
+    AppLocalizations.of(context)!;
+
+    final bool isMakki =
+        chapter.revelationPlace.toLowerCase() ==
+            'makkah';
+
+// =========================================================
+// Localized revelation place
+// =========================================================
+
+    final String revelationPlace = isMakki
+        ? localizations.meccan
+        : localizations.medinan;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 20),
+      padding: const EdgeInsets.symmetric(
+        vertical: 8,
+        horizontal: 20,
+      ),
       child: InkWell(
         onTap: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder:
-                  (context) => QuranInsidePage(
-                    SuraName: SurahArabicName,
-                    AyahCount2: AyahCount,
-                    MakiaOrMadenia2: MakiaOrMadenia,
+              builder: (context) =>
+                  QuranInsidePage(
+// =================================================
+// Current Surah
+// =================================================
+
+                    chapterId: chapter.id,
+
+// =================================================
+// All 114 Surahs from API
+// =================================================
+
+                    chapters: chapters,
                   ),
             ),
           );
@@ -47,22 +75,33 @@ class SurahContainer extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Container(
+// ==========================================
+// Surah number
+// ==========================================
+
+                SizedBox(
                   width: 48.w,
                   height: 48.h,
                   child: Stack(
                     children: [
-                      Image(image: AssetImage(AppImages.numberIcon)),
+                      const Image(
+                        image: AssetImage(
+                          AppImages.numberIcon,
+                        ),
+                      ),
+
                       Center(
                         child: Text(
-                          counter,
+                          chapter.id.toString(),
                           style: TextStyle(
                             fontSize: 16,
-                            color: AppColors.DarkGreenColor,
-                            fontWeight: FontWeight.w400,
+                            color:
+                            AppColors.DarkGreenColor,
+                            fontWeight:
+                            FontWeight.w400,
                             fontFamily: "Cairo",
                           ),
                         ),
@@ -70,71 +109,79 @@ class SurahContainer extends StatelessWidget {
                     ],
                   ),
                 ),
-                Spacer(),
+
+                const Spacer(),
+
+// ==========================================
+// Names + Ayah count
+// ==========================================
+
                 Column(
+                  mainAxisAlignment:
+                  MainAxisAlignment.center,
+                  crossAxisAlignment:
+                  CrossAxisAlignment.end,
                   children: [
                     Text(
-                      SurahArabicName,
+                      chapter.nameArabic,
                       style: TextStyle(
                         fontSize: 18,
-                        color: AppColors.BlackColor,
-                        fontWeight: FontWeight.w500,
+                        color:
+                        AppColors.BlackColor,
+                        fontWeight:
+                        FontWeight.w500,
                         fontFamily: "Cairo",
                       ),
                     ),
+
                     SizedBox(height: 4.h),
+
                     Text(
-                      "$SurahENglishName · $AyahCount آية ",
+                      "${chapter.nameSimple} · ${localizations.ayahCount(
+                          chapter.versesCount)}",
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.GreyColor,
-                        fontWeight: FontWeight.w400,
+                        color:
+                        AppColors.GreyColor,
+                        fontWeight:
+                        FontWeight.w400,
                         fontFamily: "Cairo",
                       ),
                     ),
                   ],
                 ),
+
                 SizedBox(width: 16.w),
-                if (MakiaOrMadenia == "مكية")
-                  Container(
-                    width: 42.44.w,
-                    height: 25.h,
-                    decoration: BoxDecoration(
-                      color: AppColors.lightGreenColor2,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text(
-                        "مكية",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.DarkGreenColor,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: "Cairo",
-                        ),
+
+// ==========================================
+// Makki / Madani
+// ==========================================
+
+                Container(
+                  width: 55.w,
+                  height: 30.h,
+                  decoration: BoxDecoration(
+                    color: isMakki
+                        ? AppColors.lightGreenColor2
+                        : AppColors.lightYellowColor,
+                    borderRadius:
+                    BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      revelationPlace,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: isMakki
+                            ? AppColors.DarkGreenColor
+                            : AppColors.DarkYellowColor,
+                        fontWeight:
+                        FontWeight.w400,
+                        fontFamily: "Cairo",
                       ),
                     ),
                   ),
-                if (MakiaOrMadenia == "مدنية")
-                  Container(
-                    width: 42.44.w,
-                    height: 25.h,
-                    decoration: BoxDecoration(
-                      color: AppColors.lightYellowColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text(
-                        "مدنية",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.DarkYellowColor,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: "Cairo",
-                        ),
-                      ),
-                    ),
-                  ),
+                ),
               ],
             ),
           ),

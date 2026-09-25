@@ -92,6 +92,7 @@ class AppImages {
   static const String notficationIcon = "assets/images/notfiIcon.png";
   static const String aboutIcon = "assets/images/aboutIcon.png";
   static const String isalmicIcon = "assets/images/islamicIco.png";
+  static const String isalmicIcon2 = "assets/images/islamicIco (1).png";
 
   static const String tasbeehbackground = "assets/images/tasbeehBG.png";
   static const String qiblaIcon = "assets/images/Qibla.png";

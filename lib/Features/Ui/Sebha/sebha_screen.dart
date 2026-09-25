@@ -1,62 +1,84 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islamic/Features/Ui/Sebha/counter_sebha_container.dart';
 import 'package:islamic/Features/Ui/Sebha/tasbeeh_container.dart';
-import 'package:islamic/Features/Ui/home_screen/ayah_container.dart';
+import 'package:islamic/core/Utils/app_colors.dart';
+import 'package:islamic/core/Utils/app_images.dart';
 
-import '../../../core/Utils/app_colors.dart';
-import '../../../core/Utils/app_images.dart';
+import '../../../l10n/app_localizations.dart';
 
 class SebhaScreen extends StatefulWidget {
-  SebhaScreen({super.key});
+  const SebhaScreen({super.key});
 
   @override
   State<SebhaScreen> createState() => _SebhaScreenState();
 }
 
 class _SebhaScreenState extends State<SebhaScreen> {
-  String SelectedTasbeeh = "سبحان الله";
-  final List<Map<String, String>> tasbeehList = [
-    {"Title": "سبحان الله"},
-    {"Title": "الحمد لله"},
-    {"Title": "الله أكبر"},
-    {"Title": "لا إله إلا الله"},
-  ];
+  String selectedTasbeeh = " ";
+
+  // العدد الافتراضي
+  int targetCount = 33;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    final List<Map<String, String>> tasbeehList = [
+      {"Title": l10n.subhanAllah},
+      {"Title": l10n.alhamdulillah},
+      {"Title": l10n.allahuAkbar},
+      {"Title": l10n.laIlahaIllallah},
+    ];
+
     return Scaffold(
       backgroundColor: AppColors.semiwhiteColor,
       body: SingleChildScrollView(
         child: Column(
           children: [
+            // ================= HEADER =================
+
             Container(
               width: 430.w,
               height: 110.h,
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage(AppImages.GreenContainerBackground),
+                  image: AssetImage(
+                    AppImages.GreenContainerBackground,
+                  ),
                   fit: BoxFit.fill,
                 ),
               ),
               child: Padding(
                 padding: EdgeInsets.symmetric(
-                  vertical: 20.0.h,
+                  vertical: 20.h,
                   horizontal: 24.w,
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Icon(
-                      Icons.volume_down_sharp,
-                      size: 24,
-                      color: AppColors.whiteColor,
+                    // زر تحديد العدد
+                    InkWell(
+                      borderRadius: BorderRadius.circular(30),
+                      onTap: () {
+                        _showTargetDialog();
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.all(6.w),
+                        child: Icon(
+                          Icons.tune,
+                          size: 24,
+                          color: AppColors.whiteColor,
+                        ),
+                      ),
                     ),
-                    Spacer(),
+
+                    const Spacer(),
+
                     Column(
                       children: [
                         Text(
-                          "المسبحة الإلكترونية",
+                          l10n.electronicTasbeeh,
                           style: TextStyle(
                             fontSize: 24,
                             color: AppColors.whiteColor,
@@ -64,9 +86,11 @@ class _SebhaScreenState extends State<SebhaScreen> {
                             fontFamily: "Cairo",
                           ),
                         ),
+
                         SizedBox(height: 5.h),
+
                         Text(
-                          "سبّح واذكر الله في كل وقت",
+                          l10n.rememberAllahAnytime,
                           style: TextStyle(
                             fontSize: 14,
                             color: AppColors.whiteColor,
@@ -76,7 +100,10 @@ class _SebhaScreenState extends State<SebhaScreen> {
                         ),
                       ],
                     ),
+
                     SizedBox(width: 16.w),
+
+                    // Back
                     InkWell(
                       onTap: () {
                         Navigator.of(context).pop();
@@ -92,12 +119,16 @@ class _SebhaScreenState extends State<SebhaScreen> {
               ),
             ),
 
+            // ================= TASBEEH TYPES =================
+
             Padding(
-              padding: EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(16.w),
               child: GridView.builder(
                 shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: tasbeehList.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate:
+                const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 12,
@@ -105,30 +136,177 @@ class _SebhaScreenState extends State<SebhaScreen> {
                 ),
                 itemBuilder: (context, index) {
                   final tasbeehIndex = tasbeehList[index];
+
                   return TasbeehContainer(
                     tasbeehTitle: tasbeehIndex["Title"]!,
-                    isSelected: SelectedTasbeeh == tasbeehIndex["Title"],
+                    isSelected:
+                    selectedTasbeeh ==
+                        tasbeehIndex["Title"],
                     onTap: () {
                       setState(() {
-                        SelectedTasbeeh = tasbeehIndex["Title"]!;
+                        selectedTasbeeh =
+                        tasbeehIndex["Title"]!;
                       });
                     },
                   );
                 },
               ),
             ),
-            CounterSebhaContainer(tasbeehTitle: SelectedTasbeeh),
-            AyahContainerr(
-              title: "فضل التسبيح",
-              lastLine: "رواه البخاري ومسلم",
-              subTitle:
-                  "مَنْ قَالَ سُبْحَانَ اللَّهِ وَبِحَمۡدِهِ فِي يَوۡمٍ مِائَةَ مَرَّةٍ حُطَّتۡ خَطَايَاهُ وَإِنۡ كَانَتۡ مِثۡلَ زَبَدِ ٱلۡبَحۡرِ",
-              topPadding: 10,
+
+            // ================= COUNTER =================
+
+            CounterSebhaContainer(
+              tasbeehTitle: selectedTasbeeh,
+              targetCount: targetCount,
             ),
-            SizedBox(height: 60.h),
+
+            SizedBox(height: 80.h),
           ],
         ),
       ),
+    );
+  }
+
+  // =========================================================
+  // TARGET COUNT DIALOG
+  // =========================================================
+
+  void _showTargetDialog() {
+    final TextEditingController controller =
+    TextEditingController(
+      text: targetCount.toString(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.whiteColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+
+          title: Text(
+            "تحديد عدد التسبيحات",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 21.sp,
+              color: AppColors.DarkGreenColor,
+              fontWeight: FontWeight.w600,
+              fontFamily: "Cairo",
+            ),
+          ),
+
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+
+            // أرقام فقط
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+            ],
+
+            textAlign: TextAlign.center,
+
+            style: TextStyle(
+              fontSize: 25.sp,
+              color: AppColors.BlackColor,
+              fontFamily: "Cairo",
+            ),
+
+            decoration: InputDecoration(
+              hintText: "مثال: 100",
+              hintStyle: TextStyle(
+                color: AppColors.GreyColor,
+                fontFamily: "Cairo",
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+                borderSide: BorderSide(
+                  color: AppColors.lightGreyColor,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+                borderSide: BorderSide(
+                  color: AppColors.DarkGreenColor,
+                  width: 2,
+                ),
+              ),
+            ),
+          ),
+
+          actionsAlignment: MainAxisAlignment.center,
+
+          actions: [
+            // إلغاء
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+              child: Text(
+                "إلغاء",
+                style: TextStyle(
+                  color: AppColors.GreyColor,
+                  fontFamily: "Cairo",
+                ),
+              ),
+            ),
+
+            SizedBox(width: 10.w),
+
+            // تأكيد
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.DarkGreenColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () {
+                final String valueText =
+                controller.text.trim();
+
+                final int? newTarget =
+                int.tryParse(valueText);
+
+                // ممنوع صفر أو قيمة غير صحيحة
+                if (newTarget == null || newTarget <= 0) {
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        "من فضلك أدخل عدد أكبر من صفر",
+                        style: TextStyle(
+                          fontFamily: "Cairo",
+                        ),
+                      ),
+                      backgroundColor:
+                      AppColors.DarkGreenColor,
+                    ),
+                  );
+
+                  return;
+                }
+
+                setState(() {
+                  targetCount = newTarget;
+                });
+
+                Navigator.pop(dialogContext);
+              },
+              child: Text(
+                "تأكيد",
+                style: TextStyle(
+                  color: AppColors.whiteColor,
+                  fontFamily: "Cairo",
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

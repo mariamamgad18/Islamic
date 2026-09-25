@@ -4,11 +4,15 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/Utils/app_colors.dart';
 
 class ClockContainer extends StatelessWidget {
-  ClockContainer({super.key, required this.onTimeSelected});
+  ClockContainer({
+    super.key,
+    required this.onTimeSelected,
+  });
 
   final Function(TimeOfDay) onTimeSelected;
 
-  TextEditingController timeController = TextEditingController();
+  TextEditingController timeController =
+  TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -19,35 +23,48 @@ class ClockContainer extends StatelessWidget {
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12),
       ),
-      padding: EdgeInsets.symmetric(horizontal: 10.w),
+      padding: EdgeInsets.symmetric(
+        horizontal: 10.w,
+      ),
       child: TextField(
         controller: timeController,
         readOnly: true,
-        style: TextStyle(color: AppColors.BlackColor, fontSize: 16),
-        decoration: InputDecoration(border: InputBorder.none),
+        style: TextStyle(
+          color: AppColors.BlackColor,
+          fontSize: 16,
+        ),
+        decoration: InputDecoration(
+          border: InputBorder.none,
+        ),
         onTap: () async {
-          // هعمل var اسمه : pickedTime
-          // نوعه TimeOfDay?
-
-          TimeOfDay? pickedTime = await showTimePicker(
+          TimeOfDay? pickedTime =
+          await showTimePicker(
             context: context,
-            // الساعه تفتح ع الوقت الحالي
+
+// الساعه تفتح ع الوقت الحالي
             initialTime: TimeOfDay.now(),
+
             builder: (context, child) {
               return Theme(
                 data: Theme.of(context).copyWith(
                   colorScheme: ColorScheme.light(
-                    primary: AppColors.DarkGreenColor,
-                    // لون الزرار و الساعة
+                    primary:
+                    AppColors.DarkGreenColor,
+
+// لون الزرار و الساعة
                     onPrimary: Colors.white,
-                    // لون النص جواه
-                    onSurface: AppColors.BlackColor, // لون الأرقام
+
+// لون الأرقام
+                    onSurface:
+                    AppColors.BlackColor,
                   ),
 
-                  textButtonTheme: TextButtonThemeData(
-                    style: TextButton.styleFrom(
+                  textButtonTheme:
+                  TextButtonThemeData(
+                    style:
+                    TextButton.styleFrom(
                       foregroundColor:
-                          AppColors.DarkGreenColor, // لون OK و Cancel
+                      AppColors.DarkGreenColor,
                     ),
                   ),
                 ),
@@ -56,10 +73,14 @@ class ClockContainer extends StatelessWidget {
               );
             },
           );
+
           if (pickedTime != null) {
-            // هنا عشان اتشيك ازا كان اختار وقت ولا قفل الساعه من غير م يختار
-            //لو اختار هنخليها تسمع ف ال ui
-            onTimeSelected(pickedTime); // 👈 أهم سطر
+// هنا عشان اتشيك ازا كان اختار وقت ولا قفل الساعه من غير م يختار
+// لو اختار هنخليها تسمع ف ال UI
+
+            onTimeSelected(
+              pickedTime,
+            );
           }
         },
       ),

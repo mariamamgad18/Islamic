@@ -3,17 +3,24 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islamic/core/Utils/app_colors.dart';
 import 'package:islamic/core/Utils/app_images.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 class NasihaContainer extends StatelessWidget {
   const NasihaContainer({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       width: 382.w,
       height: 156.25.h,
       decoration: BoxDecoration(
         color: AppColors.semiYellowColor,
-        border: Border.all(color: AppColors.DarkYellowColor, width: 2),
+        border: Border.all(
+          color: AppColors.DarkYellowColor,
+          width: 2,
+        ),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Padding(
@@ -25,7 +32,7 @@ class NasihaContainer extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    "نصيحة",
+                    l10n.tip,
                     style: TextStyle(
                       fontSize: 18,
                       color: AppColors.BlackColor,
@@ -36,7 +43,7 @@ class NasihaContainer extends StatelessWidget {
                   SizedBox(height: 8.h),
                   Text(
                     textDirection: TextDirection.rtl,
-                    "المداومة على الأذكار اليومية تجلب السكينة والطمأنينة للقلب. احرص على تفعيل التذكيرات لتبقى على اتصال دائم بالله.",
+                    l10n.azkarTip,
                     style: TextStyle(
                       fontSize: 14,
                       color: AppColors.GreyColor,
@@ -58,7 +65,11 @@ class NasihaContainer extends StatelessWidget {
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: Center(
-                    child: Image(image: AssetImage(AppImages.nasihaIcon)),
+                    child: Image(
+                      image: AssetImage(
+                        AppImages.nasihaIcon,
+                      ),
+                    ),
                   ),
                 ),
               ],
