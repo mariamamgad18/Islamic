@@ -178,18 +178,6 @@ Settings :
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-؟
 ---
 
 ## 🚀 Upcoming Features
