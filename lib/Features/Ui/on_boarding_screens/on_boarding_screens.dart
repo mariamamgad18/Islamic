@@ -6,6 +6,8 @@ import 'package:islamic/core/Utils/app_images.dart';
 import 'package:islamic/core/Utils/app_routes.dart';
 
 import '../../../core/Utils/app_colors.dart';
+import '../../../core/Utils/app_preferences.dart';
+import '../../../l10n/app_localizations.dart';
 
 class OnBoardingScreens extends StatefulWidget {
   const OnBoardingScreens({super.key});
@@ -15,38 +17,26 @@ class OnBoardingScreens extends StatefulWidget {
 }
 
 class _OnBoardingScreensState extends State<OnBoardingScreens> {
-  //todo:_______________________________________________________________
-
   int currentPage = 0;
 
-  //todo: عايزه اعمل حاجه تتحكم ف ال activeColor  حسب ال index
-  // todo: هعمل حاجه اسمها computed property
-  // todo :دي شبه الفانكشن لكن بنادي عليها ك Variable
-  // todo: نوعه  Color
-  //todo:  get >> معناها ال Variable ده مش ثابت يعني كل مره هيتنادي عليه هيتحسب من اول و جديد
-  //todo: و هسميه activeColor
-
   Color get activeColor {
-    //الصفحه الاولي اخضر التانيه اصفر التالته اخصر
     if (currentPage == 1) {
-      //currentPage == 1 >> الفصحه التانيه
       return AppColors.YellowColor;
     }
+
     return AppColors.DarkGreenColor;
   }
 
-  //todo:_______________________________________________________________
   Row get buttonText {
-    //  الصفحه الاولي و التانيه مكتوب التالي و سهم <
-    //الصفحه التالته مكتوب ابدأ الان من غير سهم
+    final localizations = AppLocalizations.of(context)!;
+
     if (currentPage == 2) {
-      //currentPage == 2 >> الفصحه التالته
       return Row(
         children: [
           SizedBox(width: 25.w),
 
           Text(
-            "ابدأ الآن",
+            localizations.getStarted,
             style: TextStyle(
               fontSize: 16,
               color: AppColors.whiteColor,
@@ -56,67 +46,95 @@ class _OnBoardingScreensState extends State<OnBoardingScreens> {
         ],
       );
     }
+
     return Row(
       children: [
         SizedBox(width: 8.w),
 
         Text(
-          "التالي",
+          localizations.next,
           style: TextStyle(
             fontSize: 16,
             color: AppColors.whiteColor,
             fontFamily: "Cairo",
           ),
         ),
+
         SizedBox(width: 4.w),
-        Icon(Icons.arrow_forward_ios, color: AppColors.whiteColor, size: 10),
+
+        Icon(
+          Icons.arrow_forward_ios,
+          color: AppColors.whiteColor,
+          size: 10,
+        ),
       ],
     );
   }
 
-  //todo:_______________________________________________________________
-
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return IntroductionScreen(
-      safeAreaList: [false, false, false, false],
+      safeAreaList: const [false, false, false, false],
+
       onChange: (index) {
         setState(() {
           currentPage = index;
         });
       },
 
-      //todo:_____________________________Dots__________________________________
+// =========================================================
+// DOTS
+// =========================================================
+
       dotsDecorator: DotsDecorator(
-        size: Size(10, 10),
-        activeSize: Size(12, 12),
+        size: const Size(10, 10),
+        activeSize: const Size(12, 12),
         color: AppColors.GreyColor,
         activeColor: activeColor,
       ),
-      //todo:______________________________زرار ال next_________________________________
+
+// =========================================================
+// NEXT BUTTON
+// =========================================================
+
       rtl: false,
       showNextButton: true,
+
       next: Container(
         width: 200.w,
         height: 56.h,
         alignment: Alignment.center,
-        //margin:
         decoration: BoxDecoration(
           color: activeColor,
           borderRadius: BorderRadius.circular(30),
         ),
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 20.w),
+          padding: EdgeInsets.symmetric(
+            vertical: 16.h,
+            horizontal: 20.w,
+          ),
           child: buttonText,
         ),
       ),
-      //todo:______________________________زرار ال Done_________________________________
+
+// =========================================================
+// DONE BUTTON
+// =========================================================
+
       showDoneButton: true,
-      onDone: () {
-        Navigator.of(
-          context,
-        ).pushNamed(AppRoutes.LanguageSelectionScreenRoutename);
+
+      onDone: () async {
+        await AppPreferences.setOnboardingCompleted();
+
+        if (!context.mounted) return;
+
+        Navigator.of(context).pushReplacementNamed(
+          AppRoutes.LanguageSelectionScreenRoutename,
+        );
       },
+
       done: Container(
         width: 200.w,
         height: 56.h,
@@ -127,15 +145,25 @@ class _OnBoardingScreensState extends State<OnBoardingScreens> {
         ),
         child: buttonText,
       ),
-      //todo:______________________________زرار ال Skip_________________________________
+
+// =========================================================
+// SKIP BUTTON
+// =========================================================
+
       showSkipButton: true,
-      onSkip: () {
-        Navigator.of(
-          context,
-        ).pushNamed(AppRoutes.LanguageSelectionScreenRoutename);
+
+      onSkip: () async {
+        await AppPreferences.setOnboardingCompleted();
+
+        if (!context.mounted) return;
+
+        Navigator.of(context).pushReplacementNamed(
+          AppRoutes.LanguageSelectionScreenRoutename,
+        );
       },
+
       skip: Text(
-        "تخطي",
+        localizations.skip,
         style: TextStyle(
           fontSize: 16,
           fontFamily: "Cairo",
@@ -143,39 +171,72 @@ class _OnBoardingScreensState extends State<OnBoardingScreens> {
         ),
       ),
 
-      //todo:______________________________محتوي ال pages _________________________________
+// =========================================================
+// PAGES
+// =========================================================
+
       pages: [
-        //todo :1
+// =======================================================
+// PAGE 1
+// =======================================================
+
         PageViewModel(
-          titleWidget: SizedBox(),
-          decoration: PageDecoration(bodyPadding: EdgeInsets.zero),
+          titleWidget: const SizedBox(),
+
+          decoration: const PageDecoration(
+            bodyPadding: EdgeInsets.zero,
+          ),
+
           bodyWidget: OnBoardingPageViewModel(
             OnBoardingimage: AppImages.onBoarding1,
-            OnBoardingTitle: "القرآن الكريم",
+
+            OnBoardingTitle: localizations.quranKareem,
+
             OnBoardingDescription:
-                "اقرأ القرآن الكريم بخط واضح وتصميم جميل مع إمكانية الاستماع للتلاوات",
+            localizations.quranDescription,
           ),
         ),
-        //todo :2
+
+// =======================================================
+// PAGE 2
+// =======================================================
+
         PageViewModel(
-          titleWidget: SizedBox(),
-          decoration: PageDecoration(bodyPadding: EdgeInsets.zero),
+          titleWidget: const SizedBox(),
+
+          decoration: const PageDecoration(
+            bodyPadding: EdgeInsets.zero,
+          ),
+
           bodyWidget: OnBoardingPageViewModel(
             OnBoardingimage: AppImages.onBoarding2,
-            OnBoardingTitle: "مواقيت الصلاة",
+
+            OnBoardingTitle: localizations.prayerTimes,
+
             OnBoardingDescription:
-                "تنبيهات دقيقة لمواقيت الصلاة حسب موقعك مع صوت الأذان",
+            localizations.prayerTimesDescription,
           ),
         ),
-        //todo :3
+
+// =======================================================
+// PAGE 3
+// =======================================================
+
         PageViewModel(
-          titleWidget: SizedBox(),
-          decoration: PageDecoration(bodyPadding: EdgeInsets.zero),
+          titleWidget: const SizedBox(),
+
+          decoration: const PageDecoration(
+            bodyPadding: EdgeInsets.zero,
+          ),
+
           bodyWidget: OnBoardingPageViewModel(
             OnBoardingimage: AppImages.onBoarding3,
-            OnBoardingTitle: "رفيقك الروحاني",
+
+            OnBoardingTitle:
+            localizations.spiritualCompanion,
+
             OnBoardingDescription:
-                "تذكيرات يومية، أذكار، تسبيح، وكل ما تحتاجه في رحلتك الإيمانية",
+            localizations.spiritualCompanionDescription,
           ),
         ),
       ],

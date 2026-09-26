@@ -2,19 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islamic/core/Utils/app_colors.dart';
 
-class DailyRepetitionContainer extends StatefulWidget {
-  DailyRepetitionContainer({super.key});
+import '../../../l10n/app_localizations.dart';
 
-  @override
-  State<DailyRepetitionContainer> createState() =>
-      _DailyRepetitionContainerState();
-}
+class DailyRepetitionContainer extends StatelessWidget {
+  final bool isDaily;
+  final ValueChanged<bool> onChanged;
 
-class _DailyRepetitionContainerState extends State<DailyRepetitionContainer> {
-  bool dark = false;
+  const DailyRepetitionContainer({
+    super.key,
+    required this.isDaily,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       width: 470.w,
       height: 60.h,
@@ -23,24 +26,27 @@ class _DailyRepetitionContainerState extends State<DailyRepetitionContainer> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 14.0.h, horizontal: 16.w),
+        padding: EdgeInsets.symmetric(
+          vertical: 14.h,
+          horizontal: 16.w,
+        ),
         child: Row(
           children: [
             Switch(
-              value: dark,
-
-              activeTrackColor: AppColors.DarkGreenColor,
-              activeColor: AppColors.whiteColor,
-              inactiveThumbColor: AppColors.GreyColor,
-              onChanged: (bool value) {
-                setState(() {
-                  dark = value;
-                });
-              },
+              value: isDaily,
+              activeTrackColor:
+              AppColors.DarkGreenColor,
+              activeColor:
+              AppColors.whiteColor,
+              inactiveThumbColor:
+              AppColors.GreyColor,
+              onChanged: onChanged,
             ),
-            Spacer(),
+
+            const Spacer(),
+
             Text(
-              "تكرار يومي",
+              l10n.dailyRepeat,
               style: TextStyle(
                 fontSize: 14,
                 color: AppColors.BlackColor,

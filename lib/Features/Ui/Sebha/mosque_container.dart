@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islamic/core/Utils/app_colors.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 class MosqueContainer extends StatelessWidget {
   MosqueContainer({
     super.key,
@@ -19,6 +21,8 @@ class MosqueContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 12.0.h),
       child: Container(
@@ -33,7 +37,9 @@ class MosqueContainer extends StatelessWidget {
           child: Row(
             children: [
               Text(
-                " كم $distanceBetweenYourCurrentLocationAndMosque ",
+                " ${l10n.distanceToMosque(
+                  distanceBetweenYourCurrentLocationAndMosque,
+                )} ",
                 style: TextStyle(
                   fontSize: 14,
                   color: AppColors.DarkGreenColor,

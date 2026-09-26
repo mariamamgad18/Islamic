@@ -18,7 +18,7 @@ class FardColumn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 35.w,
+      //width: 35.w,
       height: 80.h,
       child: Column(
         children: [

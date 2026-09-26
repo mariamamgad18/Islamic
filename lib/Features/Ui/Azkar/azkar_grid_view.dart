@@ -2,56 +2,59 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islamic/Features/Ui/Azkar/azkar_container.dart';
 import 'package:islamic/core/Utils/app_images.dart';
+import 'package:islamic/l10n/app_localizations.dart';
 
 class AzkarGridView extends StatelessWidget {
-  //todo: هنعمل callback function
-  final Function(String) onTabItem;
+  final Function(String category) onTabItem;
 
-  AzkarGridView({super.key, required this.onTabItem});
-
-  final List<Map<String, dynamic>> AzkarList = [
-    {
-      "Title": "أذكار الصباح",
-      "azkarNumber": "5 ذكر",
-      "emoji": "🌅",
-      "image": AppImages.orangeAzkar,
-    },
-    {
-      "Title": "أذكار المساء",
-      "azkarNumber": "3 ذكر",
-      "emoji": "🌙",
-      "image": AppImages.blueAzkar,
-    },
-
-    {
-      "Title": "أذكار النوم",
-      "azkarNumber": "3 ذكر",
-      "emoji": "🌃",
-      "image": AppImages.babyBlueAzkar,
-    },
-    {
-      "Title": "أذكار بعد الصلاة",
-      "azkarNumber": "5 ذكر",
-      "emoji": "🕌",
-      "image": AppImages.greenAzkar,
-    },
-
-    {
-      "Title": "أدعية يومية",
-      "azkarNumber": "3 ذكر",
-      "emoji": "🤲",
-      "image": AppImages.pinkAzkar,
-    },
-    {
-      "Title": "آيات للحفظ",
-      "azkarNumber": "3 ذكر",
-      "emoji": "📖",
-      "image": AppImages.lightorangeAzkar,
-    },
-  ];
+  const AzkarGridView({
+    super.key,
+    required this.onTabItem,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
+    final List<Map<String, String>> azkarList = [
+      {
+        "key": "morning",
+        "title": localizations.morningAzkar,
+        "emoji": "🌅",
+        "image": AppImages.orangeAzkar,
+      },
+      {
+        "key": "evening",
+        "title": localizations.eveningAzkar,
+        "emoji": "🌙",
+        "image": AppImages.blueAzkar,
+      },
+      {
+        "key": "sleep",
+        "title": localizations.sleepAzkar,
+        "emoji": "🌃",
+        "image": AppImages.babyBlueAzkar,
+      },
+      {
+        "key": "after_prayer",
+        "title": localizations.afterPrayerAzkar,
+        "emoji": "🕌",
+        "image": AppImages.greenAzkar,
+      },
+      {
+        "key": "general_dua",
+        "title": localizations.comprehensiveDuas,
+        "emoji": "🤲",
+        "image": AppImages.pinkAzkar,
+      },
+      {
+        "key": "quranic_dua",
+        "title": localizations.quranicDuas,
+        "emoji": "📖",
+        "image": AppImages.lightorangeAzkar,
+      },
+    ];
+
     return Padding(
       padding: EdgeInsets.only(
         top: 150.h,
@@ -60,24 +63,30 @@ class AzkarGridView extends StatelessWidget {
         bottom: 30.h,
       ),
       child: GridView.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        gridDelegate:
+        const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 5,
           mainAxisSpacing: 5,
         ),
-        itemCount: AzkarList.length,
+        itemCount: azkarList.length,
         itemBuilder: (context, index) {
-          final azkarindex = AzkarList[index];
-          return InkWell(
+          final azkar = azkarList[index];
+
+          return AzkarContainer(
+            containerImage: azkar["image"]!,
+            containerEmoji: azkar["emoji"]!,
+            azkarTitle: azkar["title"]!,
+            azkarCount: "",
             onTap: () {
-              onTabItem(azkarindex["Title"]);
+              debugPrint(
+                "CARD CLICKED: ${azkar["key"]}",
+              );
+
+              onTabItem(
+                azkar["key"]!,
+              );
             },
-            child: AzkarContainer(
-              containerImage: azkarindex["image"],
-              containerEmoji: azkarindex["emoji"],
-              azkarTitle: azkarindex["Title"],
-              azkarCount: azkarindex["azkarNumber"],
-            ),
           );
         },
       ),

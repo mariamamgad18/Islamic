@@ -3,24 +3,34 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islamic/core/Utils/app_colors.dart';
 
 class ReminderContainer extends StatefulWidget {
-  ReminderContainer({
+  final String reminderTitle;
+  final TimeOfDay reminderTime;
+  final String reminderIcon;
+  final Color reminderColor;
+  final bool isEnabled;
+
+  const ReminderContainer({
     super.key,
     required this.reminderTitle,
     required this.reminderTime,
     required this.reminderIcon,
+    required this.reminderColor,
+    this.isEnabled = true,
   });
 
-  String reminderTitle;
-  String reminderIcon;
-
-  TimeOfDay reminderTime;
-
   @override
-  State<ReminderContainer> createState() => _ReminderContainerState();
+  State<ReminderContainer> createState() =>
+      _ReminderContainerState();
 }
 
 class _ReminderContainerState extends State<ReminderContainer> {
-  bool dark = false;
+  late bool isEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    isEnabled = widget.isEnabled;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,22 +42,31 @@ class _ReminderContainerState extends State<ReminderContainer> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 20.0.h, horizontal: 20.w),
+        padding: EdgeInsets.symmetric(
+          vertical: 20.h,
+          horizontal: 20.w,
+        ),
         child: Row(
           children: [
             Switch(
-              value: dark,
-              activeTrackColor: AppColors.DarkGreenColor,
+              value: isEnabled,
+              activeTrackColor:
+              AppColors.DarkGreenColor,
               activeColor: AppColors.whiteColor,
-              inactiveThumbColor: AppColors.GreyColor,
+              inactiveThumbColor:
+              AppColors.GreyColor,
               onChanged: (bool value) {
                 setState(() {
-                  dark = value;
+                  isEnabled = value;
                 });
               },
             ),
-            Spacer(),
+
+            const Spacer(),
+
             Column(
+              mainAxisAlignment:
+              MainAxisAlignment.center,
               children: [
                 Text(
                   widget.reminderTitle,
@@ -58,11 +77,13 @@ class _ReminderContainerState extends State<ReminderContainer> {
                     fontFamily: "Cairo",
                   ),
                 ),
+
                 SizedBox(height: 4.h),
+
                 Row(
                   children: [
                     Text(
-                      widget.reminderTime.toString(),
+                      widget.reminderTime.format(context),
                       style: TextStyle(
                         fontSize: 14,
                         color: AppColors.GreyColor,
@@ -70,7 +91,9 @@ class _ReminderContainerState extends State<ReminderContainer> {
                         fontFamily: "Cairo",
                       ),
                     ),
+
                     SizedBox(width: 3.3.w),
+
                     Icon(
                       Icons.access_time,
                       color: AppColors.GreyColor,
@@ -80,16 +103,23 @@ class _ReminderContainerState extends State<ReminderContainer> {
                 ),
               ],
             ),
+
             SizedBox(width: 16.w),
+
             Container(
               width: 56.w,
               height: 56.h,
               decoration: BoxDecoration(
-                color: AppColors.DarkGreenColor,
-                borderRadius: BorderRadius.circular(24),
+                color: widget.reminderColor,
+                borderRadius:
+                BorderRadius.circular(24),
               ),
               child: Center(
-                child: Image(image: AssetImage(widget.reminderIcon)),
+                child: Image(
+                  image: AssetImage(
+                    widget.reminderIcon,
+                  ),
+                ),
               ),
             ),
           ],

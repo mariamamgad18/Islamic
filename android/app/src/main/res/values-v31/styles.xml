@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+
+        <!-- Android 12 Splash background -->
+        <item name="android:windowSplashScreenBackground">#0A6349</item>
+
+        <!-- App icon shown during Android 12 startup -->
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+
+        <!-- Keep the window background green -->
+        <item name="android:windowBackground">#0A6349</item>
+
+    </style>
+
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">#0A6349</item>
+    </style>
+
+</resources>

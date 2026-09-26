@@ -1,20 +1,29 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islamic/core/Utils/app_colors.dart';
 
 class AyahContainer extends StatelessWidget {
-  AyahContainer({super.key, required this.counter, required this.ayah});
+  const AyahContainer({
+    super.key,
+    required this.counter,
+    required this.ayah,
+    required this.fontSize,
+  });
 
-  String counter;
-  String ayah;
+  final String counter;
+  final String ayah;
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(top: 20.h, right: 20.0.w, left: 20.w),
+      padding: EdgeInsets.only(
+        top: 20.h,
+        right: 20.w,
+        left: 20.w,
+      ),
       child: Container(
-        width: 390.w,
-        // height:94.h ,
+        width: double.infinity,
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(20),
@@ -23,11 +32,16 @@ class AyahContainer extends StatelessWidget {
           padding: EdgeInsets.only(
             top: 20.h,
             bottom: 32.h,
-            right: 20.0.w,
+            right: 20.w,
             left: 20.w,
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+// =========================================================
+// Ayah Number
+// =========================================================
+
               Container(
                 width: 40.w,
                 height: 40.h,
@@ -47,12 +61,21 @@ class AyahContainer extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(width: 120.w),
+
+              SizedBox(width: 20.w),
+
+// =========================================================
+// Ayah Text
+// =========================================================
+
               Expanded(
                 child: Text(
                   ayah,
+                  textAlign: TextAlign.right,
+                  textDirection: TextDirection.rtl,
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: fontSize,
+                    height: 1.8,
                     color: AppColors.BlackColor,
                     fontWeight: FontWeight.w400,
                     fontFamily: "Amiri",
