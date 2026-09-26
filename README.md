@@ -127,6 +127,7 @@ The Quran Surahs are correctly ordered and categorized as either Makki or Madani
 <img width="813" height="1600" alt="WhatsApp Image 2026-09-26 at 7 25 23 AM" src="https://github.com/user-attachments/assets/10efc332-0ce4-4250-80f2-64ff4e843b1b" />
 
 
+
 Azkar :
 
 
@@ -139,7 +140,11 @@ Azan :
 
 
 <img width="738" height="1600" alt="image" src="https://github.com/user-attachments/assets/b5dacc40-856b-43de-adfe-004f8b996594" />
-<img width="738" height="1600" alt="image" src="https://github.com/user-attachments/assets/67dbef57-73a0-4fb1-bcde-cf861c7fa4f4" />
+<img width="738" height="1600" alt="image" src="https://github.com/user-attachments/assets/e8d43abb-8afc-4cdd-9a04-bc34826fcf30" />
+
+<img width="1080" height="1014" alt="image" src="https://github.com/user-attachments/assets/125d2e70-d32b-47a5-a9da-5a5c9c075ccf" />
+<img width="738" height="1600" alt="image" src="https://github.com/user-attachments/assets/77c2eb73-7da7-4df3-b0cd-ec400b8f1fa5" />
+
 
 
 Reminders :
