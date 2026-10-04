@@ -14,7 +14,8 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
-class MainActivity : FlutterActivity() {
+class MainActivity :
+    FlutterActivity() {
 
     companion object {
 
@@ -34,15 +35,18 @@ class MainActivity : FlutterActivity() {
     override fun onCreate(
         savedInstanceState: Bundle?
     ) {
-
-        super.onCreate(savedInstanceState)
-
-        window.addFlags(
-            WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+        super.onCreate(
+            savedInstanceState
         )
 
         window.addFlags(
-            WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            WindowManager.LayoutParams
+                .FLAG_SHOW_WHEN_LOCKED
+        )
+
+        window.addFlags(
+            WindowManager.LayoutParams
+                .FLAG_TURN_SCREEN_ON
         )
     }
 
@@ -65,7 +69,7 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
 
                 // =================================================
-                // SCHEDULE ATHAN
+                // SCHEDULE
                 // =================================================
 
                 "scheduleAthan" -> {
@@ -109,20 +113,30 @@ class MainActivity : FlutterActivity() {
                     try {
 
                         scheduleAthan(
-                            athanId = athanId,
-                            prayerName = prayerName,
-                            prayerKey = prayerKey,
-                            timestamp = timestamp
+                            athanId =
+                                athanId,
+                            prayerName =
+                                prayerName,
+                            prayerKey =
+                                prayerKey,
+                            timestamp =
+                                timestamp
                         )
 
                         saveAthan(
-                            athanId = athanId,
-                            prayerName = prayerName,
-                            prayerKey = prayerKey,
-                            timestamp = timestamp
+                            athanId =
+                                athanId,
+                            prayerName =
+                                prayerName,
+                            prayerKey =
+                                prayerKey,
+                            timestamp =
+                                timestamp
                         )
 
-                        result.success(true)
+                        result.success(
+                            true
+                        )
 
                     } catch (
                         e: SecurityException
@@ -147,7 +161,7 @@ class MainActivity : FlutterActivity() {
                 }
 
                 // =================================================
-                // CANCEL ONE ATHAN BY ID
+                // CANCEL ONE
                 // =================================================
 
                 "cancelAthan" -> {
@@ -161,35 +175,28 @@ class MainActivity : FlutterActivity() {
 
                         result.error(
                             "INVALID_ID",
-                            "Athan ID is missing",
+                            "Missing athan id",
                             null
                         )
 
                         return@setMethodCallHandler
                     }
 
-                    try {
+                    cancelAthan(
+                        athanId
+                    )
 
-                        cancelAthan(athanId)
+                    removeSavedAthan(
+                        athanId
+                    )
 
-                        removeSavedAthan(athanId)
-
-                        result.success(true)
-
-                    } catch (
-                        e: Exception
-                    ) {
-
-                        result.error(
-                            "CANCEL_ERROR",
-                            e.message,
-                            null
-                        )
-                    }
+                    result.success(
+                        true
+                    )
                 }
 
                 // =================================================
-                // CANCEL ALL ATHAN FOR PRAYER
+                // CANCEL PRAYER
                 // =================================================
 
                 "cancelAthanPrayer" -> {
@@ -203,57 +210,37 @@ class MainActivity : FlutterActivity() {
 
                         result.error(
                             "INVALID_PRAYER",
-                            "Prayer key is missing",
+                            "Missing prayer key",
                             null
                         )
 
                         return@setMethodCallHandler
                     }
 
-                    try {
+                    cancelAthanPrayer(
+                        prayerKey
+                    )
 
-                        cancelAthanPrayer(prayerKey)
-
-                        result.success(true)
-
-                    } catch (
-                        e: Exception
-                    ) {
-
-                        result.error(
-                            "CANCEL_PRAYER_ERROR",
-                            e.message,
-                            null
-                        )
-                    }
+                    result.success(
+                        true
+                    )
                 }
 
                 // =================================================
-                // CANCEL ALL ATHAN
+                // CANCEL ALL
                 // =================================================
 
                 "cancelAllAthan" -> {
 
-                    try {
+                    cancelAllAthan()
 
-                        cancelAllAthan()
-
-                        result.success(true)
-
-                    } catch (
-                        e: Exception
-                    ) {
-
-                        result.error(
-                            "CANCEL_ALL_ERROR",
-                            e.message,
-                            null
-                        )
-                    }
+                    result.success(
+                        true
+                    )
                 }
 
                 // =================================================
-                // NATIVE MASTER STATE
+                // NATIVE MASTER
                 // =================================================
 
                 "setNativeAthanMasterEnabled" -> {
@@ -278,11 +265,13 @@ class MainActivity : FlutterActivity() {
                         enabled
                     )
 
-                    result.success(true)
+                    result.success(
+                        true
+                    )
                 }
 
                 // =================================================
-                // FULL SCREEN INTENT PERMISSION
+                // FULL SCREEN
                 // =================================================
 
                 "canUseFullScreenIntent" -> {
@@ -292,19 +281,17 @@ class MainActivity : FlutterActivity() {
                     )
                 }
 
-                // =================================================
-                // OPEN FULL SCREEN INTENT SETTINGS
-                // =================================================
-
                 "openFullScreenIntentSettings" -> {
 
                     openFullScreenIntentSettings()
 
-                    result.success(true)
+                    result.success(
+                        true
+                    )
                 }
 
                 // =================================================
-                // EXACT ALARM PERMISSION
+                // EXACT ALARM
                 // =================================================
 
                 "canScheduleExactAlarms" -> {
@@ -326,13 +313,11 @@ class MainActivity : FlutterActivity() {
 
                     } else {
 
-                        result.success(true)
+                        result.success(
+                            true
+                        )
                     }
                 }
-
-                // =================================================
-                // OPEN EXACT ALARM SETTINGS
-                // =================================================
 
                 "openExactAlarmSettings" -> {
 
@@ -361,11 +346,12 @@ class MainActivity : FlutterActivity() {
                         )
                     }
 
-                    result.success(true)
+                    result.success(
+                        true
+                    )
                 }
 
                 else -> {
-
                     result.notImplemented()
                 }
             }
@@ -373,7 +359,7 @@ class MainActivity : FlutterActivity() {
     }
 
     // =========================================================
-    // NATIVE MASTER STATE
+    // NATIVE MASTER
     // =========================================================
 
     private fun setNativeAthanMasterEnabled(
@@ -395,10 +381,11 @@ class MainActivity : FlutterActivity() {
     }
 
     // =========================================================
-    // FULL SCREEN INTENT PERMISSION
+    // FULL SCREEN
     // =========================================================
 
-    private fun canUseFullScreenIntent(): Boolean {
+    private fun canUseFullScreenIntent():
+            Boolean {
 
         if (
             Build.VERSION.SDK_INT <
@@ -415,10 +402,6 @@ class MainActivity : FlutterActivity() {
         return notificationManager
             .canUseFullScreenIntent()
     }
-
-    // =========================================================
-    // OPEN FULL SCREEN INTENT SETTINGS
-    // =========================================================
 
     private fun openFullScreenIntentSettings() {
 
@@ -444,19 +427,16 @@ class MainActivity : FlutterActivity() {
                     Intent.FLAG_ACTIVITY_NEW_TASK
                 )
 
-                startActivity(intent)
+                startActivity(
+                    intent
+                )
 
-            } catch (e: Exception) {
-
-                /*
-                 * Fallback to general application details
-                 * if the device doesn't expose the dedicated
-                 * Full Screen Intent settings page.
-                 */
+            } catch (_: Exception) {
 
                 val fallbackIntent =
                     Intent(
-                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                        Settings
+                            .ACTION_APPLICATION_DETAILS_SETTINGS
                     )
 
                 fallbackIntent.data =
@@ -485,6 +465,29 @@ class MainActivity : FlutterActivity() {
         prayerKey: String,
         timestamp: Long
     ) {
+
+        val prefs =
+            getSharedPreferences(
+                PREFS_NAME,
+                Context.MODE_PRIVATE
+            )
+
+        // =====================================================
+        // NATIVE MASTER SAFETY CHECK
+        // =====================================================
+
+        val masterEnabled =
+            prefs.getBoolean(
+                NATIVE_MASTER_ENABLED_KEY,
+                false
+            )
+
+        if (!masterEnabled) {
+
+            throw IllegalStateException(
+                "Native Athan master is disabled"
+            )
+        }
 
         val alarmManager =
             getSystemService(
@@ -545,7 +548,7 @@ class MainActivity : FlutterActivity() {
     }
 
     // =========================================================
-    // CANCEL ONE ATHAN
+    // CANCEL ONE
     // =========================================================
 
     private fun cancelAthan(
@@ -580,7 +583,7 @@ class MainActivity : FlutterActivity() {
     }
 
     // =========================================================
-    // CANCEL ALL ATHAN FOR PRAYER
+    // CANCEL PRAYER
     // =========================================================
 
     private fun cancelAthanPrayer(
@@ -616,10 +619,13 @@ class MainActivity : FlutterActivity() {
                 ) ?: ""
 
             if (
-                savedPrayerKey == prayerKey
+                savedPrayerKey ==
+                prayerKey
             ) {
 
-                cancelAthan(athanId)
+                cancelAthan(
+                    athanId
+                )
 
                 idsToRemove.add(
                     idString
@@ -627,8 +633,9 @@ class MainActivity : FlutterActivity() {
             }
         }
 
-        for (id in idsToRemove) {
-
+        for (
+        id in idsToRemove
+        ) {
             ids.remove(id)
         }
 
@@ -640,7 +647,9 @@ class MainActivity : FlutterActivity() {
             ids
         )
 
-        for (idString in idsToRemove) {
+        for (
+        idString in idsToRemove
+        ) {
 
             val athanId =
                 idString.toIntOrNull()
@@ -663,7 +672,7 @@ class MainActivity : FlutterActivity() {
     }
 
     // =========================================================
-    // CANCEL ALL ATHAN
+    // CANCEL ALL
     // =========================================================
 
     private fun cancelAllAthan() {
@@ -672,6 +681,12 @@ class MainActivity : FlutterActivity() {
             getSharedPreferences(
                 PREFS_NAME,
                 Context.MODE_PRIVATE
+            )
+
+        val nativeMaster =
+            prefs.getBoolean(
+                NATIVE_MASTER_ENABLED_KEY,
+                false
             )
 
         val ids =
@@ -686,13 +701,12 @@ class MainActivity : FlutterActivity() {
                 idString.toIntOrNull()
                     ?: continue
 
-            cancelAthan(athanId)
+            cancelAthan(
+                athanId
+            )
         }
 
-        // =====================================================
-        // STOP CURRENT ATHAN SERVICE TOO
-        // =====================================================
-
+        // Stop currently playing Athan.
         val serviceIntent =
             Intent(
                 this,
@@ -703,28 +717,19 @@ class MainActivity : FlutterActivity() {
             AthanService.ACTION_STOP
 
         try {
-
-            startService(serviceIntent)
-
+            startService(
+                serviceIntent
+            )
         } catch (_: Exception) {
         }
 
-        /*
-         * IMPORTANT:
-         *
-         * We intentionally DO NOT change the native master
-         * state here.
-         *
-         * cancelAllAthan() can be called while Master is ON.
-         */
+        // Keep native master state,
+        // but default MUST be false.
         prefs.edit()
             .clear()
             .putBoolean(
                 NATIVE_MASTER_ENABLED_KEY,
-                prefs.getBoolean(
-                    NATIVE_MASTER_ENABLED_KEY,
-                    true
-                )
+                nativeMaster
             )
             .apply()
     }

@@ -25,17 +25,20 @@ class PrayersListView extends StatelessWidget {
 
     final froodAzan = [
       {
-        "time": timings?.fajr ?? "00:00",
+        "time":
+        timings?.fajr ?? "00:00",
         "name": "fajr",
         "image": AppImages.fajr,
       },
       {
-        "time": timings?.dhuhr ?? "00:00",
+        "time":
+        timings?.dhuhr ?? "00:00",
         "name": "dhuhr",
         "image": AppImages.duhr,
       },
       {
-        "time": timings?.asr ?? "00:00",
+        "time":
+        timings?.asr ?? "00:00",
         "name": "asr",
         "image": AppImages.asr,
       },
@@ -46,7 +49,8 @@ class PrayersListView extends StatelessWidget {
         "image": AppImages.maghreb,
       },
       {
-        "time": timings?.isha ?? "00:00",
+        "time":
+        timings?.isha ?? "00:00",
         "name": "isha",
         "image": AppImages.ishaa,
       },
@@ -57,9 +61,10 @@ class PrayersListView extends StatelessWidget {
         top: 300.h,
       ),
       child: ListView.builder(
-        itemCount: froodAzan.length,
-        itemBuilder: (context,
-            index,) {
+        itemCount:
+        froodAzan.length,
+        itemBuilder:
+            (context, index) {
           final prayer =
           froodAzan[index];
 

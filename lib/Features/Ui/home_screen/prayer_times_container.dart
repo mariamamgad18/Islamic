@@ -24,6 +24,7 @@ class PrayerTimesContainer extends StatefulWidget {
 }
 
 class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
+
   Timer? _timer;
 
   @override
@@ -46,9 +47,9 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
     super.dispose();
   }
 
-  // =========================================================
-  // GET PRAYERS
-  // =========================================================
+// =========================================================
+// GET PRAYERS
+// =========================================================
 
   Map<String, String> get prayers {
     if (widget.timings == null) {
@@ -70,9 +71,9 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
     };
   }
 
-  // =========================================================
-  // LOCALIZED PRAYER NAME
-  // =========================================================
+// =========================================================
+// LOCALIZED PRAYER NAME
+// =========================================================
 
   String getLocalizedPrayerName(String prayerName,
       AppLocalizations localizations,) {
@@ -97,15 +98,14 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
     }
   }
 
-  // =========================================================
-  // REMAINING TIME
-  // =========================================================
+// =========================================================
+// REMAINING TIME
+// =========================================================
 
   String getRemainingText(Duration remaining,
       AppLocalizations localizations,) {
     final hours = remaining.inHours;
-    final minutes =
-        remaining.inMinutes % 60;
+    final minutes = remaining.inMinutes % 60;
 
     if (hours > 0) {
       final hourText =
@@ -133,9 +133,9 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
         "$minutes $minuteText";
   }
 
-  // =========================================================
-  // CONVERT PRAYER TIME
-  // =========================================================
+// =========================================================
+// CONVERT PRAYER TIME
+// =========================================================
 
   DateTime _parsePrayerTime(String time) {
     final cleanTime =
@@ -163,9 +163,9 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
     );
   }
 
-  // =========================================================
-  // GET PRAYER PROGRESS
-  // =========================================================
+// =========================================================
+// GET PRAYER PROGRESS
+// =========================================================
 
   Map<String, dynamic> _getPrayerProgress() {
     final now = DateTime.now();
@@ -207,9 +207,9 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
     Map<String, dynamic>? previousPrayer;
     Map<String, dynamic>? nextPrayer;
 
-    // =========================================================
-    // NEXT PRAYER
-    // =========================================================
+// =========================================================
+// NEXT PRAYER
+// =========================================================
 
     for (final prayer in prayerDateTimes) {
       final prayerTime =
@@ -237,9 +237,9 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
       };
     }
 
-    // =========================================================
-    // PREVIOUS PRAYER
-    // =========================================================
+// =========================================================
+// PREVIOUS PRAYER
+// =========================================================
 
     for (
     int i = prayerDateTimes.length - 1;
@@ -315,9 +315,9 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
     final localizations =
     AppLocalizations.of(context)!;
 
-    // =========================================================
-    // NO LOCATION
-    // =========================================================
+// =========================================================
+// NO LOCATION
+// =========================================================
 
     if (widget.timings == null) {
       final fardList = [
@@ -349,24 +349,29 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
       ];
 
       return Container(
-        width: 390.w,
-        height: 280.h,
+        width: double.infinity,
+        constraints: BoxConstraints(
+          minHeight: 260.h,
+        ),
         decoration: BoxDecoration(
           borderRadius:
           BorderRadius.circular(20),
-          color: AppColors.whiteColor,
+          color:
+          AppColors.whiteColor,
         ),
         child: Padding(
           padding:
           const EdgeInsets.all(20.0),
           child: Column(
             children: [
-              // =================================================
-              // FIRST ROW
-              // =================================================
+
+// =================================================
+// FIRST ROW
+// =================================================
 
               Row(
                 children: [
+
                   Column(
                     children: [
                       Text(
@@ -376,7 +381,8 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
                           fontWeight:
                           FontWeight.w400,
                           color:
-                          AppColors.DarkGreenColor,
+                          AppColors
+                              .DarkGreenColor,
                           fontFamily: "Cairo",
                         ),
                       ),
@@ -392,8 +398,10 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
                               fontWeight:
                               FontWeight.w400,
                               color:
-                              AppColors.GreyColor,
-                              fontFamily: "Cairo",
+                              AppColors
+                                  .GreyColor,
+                              fontFamily:
+                              "Cairo",
                             ),
                           ),
 
@@ -406,7 +414,9 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
                             BoxDecoration(
                               borderRadius:
                               BorderRadius
-                                  .circular(30),
+                                  .circular(
+                                30,
+                              ),
                               color:
                               AppColors
                                   .lightGreenColor,
@@ -422,14 +432,17 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
                   Column(
                     children: [
                       Text(
-                        localizations.nextPrayer,
+                        localizations
+                            .nextPrayer,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight:
                           FontWeight.w400,
                           color:
-                          AppColors.GreyColor,
-                          fontFamily: "Cairo",
+                          AppColors
+                              .GreyColor,
+                          fontFamily:
+                          "Cairo",
                         ),
                       ),
 
@@ -442,8 +455,10 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
                           fontWeight:
                           FontWeight.w500,
                           color:
-                          AppColors.BlackColor,
-                          fontFamily: "Cairo",
+                          AppColors
+                              .BlackColor,
+                          fontFamily:
+                          "Cairo",
                         ),
                       ),
                     ],
@@ -457,9 +472,12 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
                     decoration:
                     BoxDecoration(
                       color:
-                      AppColors.DarkGreenColor,
+                      AppColors
+                          .DarkGreenColor,
                       borderRadius:
-                      BorderRadius.circular(24),
+                      BorderRadius.circular(
+                        24,
+                      ),
                     ),
                     child: Image(
                       image: AssetImage(
@@ -472,9 +490,9 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
 
               SizedBox(height: 35.h),
 
-              // =================================================
-              // EMPTY PROGRESS LINE
-              // =================================================
+// =================================================
+// EMPTY PROGRESS LINE
+// =================================================
 
               SizedBox(
                 width: double.infinity,
@@ -484,46 +502,54 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
                   PrayerProgressPainter(
                     progress: 0,
                     activeColor:
-                    AppColors.DarkGreenColor,
+                    AppColors
+                        .DarkGreenColor,
                     inactiveColor:
-                    AppColors.lightGreenColor,
+                    AppColors
+                        .lightGreenColor,
                   ),
                 ),
               ),
 
               SizedBox(height: 25.h),
 
-              // =================================================
-              // PRAYER TIMES
-              // =================================================
+// =================================================
+// PRAYER TIMES
+// =================================================
 
               Row(
-                children: List.generate(
+                children:
+                List.generate(
                   fardList.length,
                       (index) {
-                    final fardIndex = fardList[index];
+                    final fardIndex =
+                    fardList[index];
 
                     return Expanded(
                       child: FardColumn(
-                        fardImage: fardIndex["image"]!,
-                        fardName: fardIndex["name"]!,
-                        fardTime: fardIndex["time"]!,
+                        fardImage:
+                        fardIndex[
+                        "image"]!,
+                        fardName:
+                        fardIndex[
+                        "name"]!,
+                        fardTime:
+                        fardIndex[
+                        "time"]!,
                       ),
                     );
                   },
                 ),
               ),
-
-
             ],
           ),
         ),
       );
     }
 
-    // =========================================================
-    // NORMAL MODE WITH LOCATION
-    // =========================================================
+// =========================================================
+// NORMAL MODE WITH LOCATION
+// =========================================================
 
     final List<Map<String, String>>
     fardList = [
@@ -554,11 +580,12 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
       },
     ];
 
-    // =========================================================
-    // NEXT PRAYER
-    // =========================================================
+// =========================================================
+// NEXT PRAYER
+// =========================================================
 
-    final nextPrayer = getNextPrayer(
+    final nextPrayer =
+    getNextPrayer(
       prayers: prayers,
     );
 
@@ -577,9 +604,9 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
       localizations,
     );
 
-    // =========================================================
-    // PROGRESS
-    // =========================================================
+// =========================================================
+// PROGRESS
+// =========================================================
 
     final prayerProgress =
     _getPrayerProgress();
@@ -589,30 +616,45 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
     as double;
 
     return Container(
-      width: 390.w,
-      height: 280.h,
+      width: double.infinity,
+      constraints: BoxConstraints(
+        minHeight: 280.h,
+      ),
       decoration: BoxDecoration(
         borderRadius:
         BorderRadius.circular(20),
-        color: AppColors.whiteColor,
+        color:
+        AppColors.whiteColor,
       ),
       child: Padding(
         padding:
         const EdgeInsets.all(20.0),
         child: Column(
           children: [
+
+// =================================================
+// TOP SECTION
+// =================================================
+
             Row(
               children: [
+
+// =================================================
+// NEXT PRAYER TIME + REMAINING TIME
+// =================================================
+
                 Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.center,
                   children: [
+
                     Text(
                       nextPrayer.time,
                       style: TextStyle(
                         fontSize: 30,
                         fontWeight:
                         FontWeight.w400,
-                        color:
-                        AppColors
+                        color: AppColors
                             .DarkGreenColor,
                         fontFamily: "Cairo",
                       ),
@@ -621,17 +663,22 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
                     SizedBox(height: 4.h),
 
                     Row(
+                      mainAxisSize:
+                      MainAxisSize.min,
                       children: [
+
                         Text(
                           remainingText,
+                          textAlign:
+                          TextAlign.center,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight:
                             FontWeight.w400,
-                            color:
-                            AppColors
+                            color: AppColors
                                 .GreyColor,
-                            fontFamily: "Cairo",
+                            fontFamily:
+                            "Cairo",
                           ),
                         ),
 
@@ -645,9 +692,9 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
                             borderRadius:
                             BorderRadius
                                 .circular(
-                                30),
-                            color:
-                            AppColors
+                              30,
+                            ),
+                            color: AppColors
                                 .lightGreenColor,
                           ),
                         ),
@@ -658,51 +705,68 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
 
                 const Spacer(),
 
-                Column(
-                  children: [
-                    Text(
-                      localizations.nextPrayer,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight:
-                        FontWeight.w400,
-                        color:
-                        AppColors
-                            .GreyColor,
-                        fontFamily: "Cairo",
-                      ),
-                    ),
+// =================================================
+// NEXT PRAYER NAME
+// =================================================
 
-                    SizedBox(height: 3.h),
+                Flexible(
+                  child: Column(
+                    children: [
 
-                    Text(
-                      "${localizations.prayer} "
-                          "$localizedNextPrayerName",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight:
-                        FontWeight.w500,
-                        color:
-                        AppColors.BlackColor,
-                        fontFamily: "Cairo",
+                      Text(
+                        localizations
+                            .nextPrayer,
+                        textAlign:
+                        TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight:
+                          FontWeight.w400,
+                          color: AppColors
+                              .GreyColor,
+                          fontFamily:
+                          "Cairo",
+                        ),
                       ),
-                    ),
-                  ],
+
+                      SizedBox(height: 3.h),
+
+                      Text(
+                        "${localizations.prayer} "
+                            "$localizedNextPrayerName",
+                        textAlign:
+                        TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight:
+                          FontWeight.w500,
+                          color: AppColors
+                              .BlackColor,
+                          fontFamily:
+                          "Cairo",
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
 
                 SizedBox(width: 12.w),
+
+// =================================================
+// CLOCK ICON
+// =================================================
 
                 Container(
                   width: 40.w,
                   height: 40.h,
                   decoration:
                   BoxDecoration(
-                    color:
-                    AppColors
+                    color: AppColors
                         .DarkGreenColor,
                     borderRadius:
                     BorderRadius.circular(
-                        24),
+                      24,
+                    ),
                   ),
                   child: Image(
                     image: AssetImage(
@@ -715,6 +779,10 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
 
             SizedBox(height: 35.h),
 
+// =================================================
+// PROGRESS LINE
+// =================================================
+
             SizedBox(
               width: double.infinity,
               height: 25.h,
@@ -723,7 +791,8 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
                 PrayerProgressPainter(
                   progress: progress,
                   activeColor:
-                  AppColors.DarkGreenColor,
+                  AppColors
+                      .DarkGreenColor,
                   inactiveColor:
                   AppColors
                       .lightGreenColor,
@@ -733,6 +802,10 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
 
             SizedBox(height: 25.h),
 
+// =================================================
+// PRAYER TIMES
+// =================================================
+
             Row(
               children:
               List.generate(
@@ -741,23 +814,17 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
                   final fardIndex =
                   fardList[index];
 
-                  return Padding(
-                    padding:
-                    EdgeInsets.only(
-                      right:
-                      index ==
-                          fardList.length -
-                              1
-                          ? 0
-                          : 40,
-                    ),
+                  return Expanded(
                     child: FardColumn(
                       fardImage:
-                      fardIndex["image"]!,
+                      fardIndex[
+                      "image"]!,
                       fardName:
-                      fardIndex["name"]!,
+                      fardIndex[
+                      "name"]!,
                       fardTime:
-                      fardIndex["time"]!,
+                      fardIndex[
+                      "time"]!,
                     ),
                   );
                 },
@@ -775,6 +842,7 @@ class _PrayerTimesContainerState extends State<PrayerTimesContainer> {
 // =============================================================
 
 class PrayerProgressPainter extends CustomPainter {
+
   final double progress;
   final Color activeColor;
   final Color inactiveColor;
@@ -803,14 +871,22 @@ class PrayerProgressPainter extends CustomPainter {
           StrokeCap.round;
 
     final double startX = 5;
+
     final double endX =
         size.width - 5;
+
     final double centerY =
         size.height / 2;
 
     canvas.drawLine(
-      Offset(startX, centerY),
-      Offset(endX, centerY),
+      Offset(
+        startX,
+        centerY,
+      ),
+      Offset(
+        endX,
+        centerY,
+      ),
       inactivePaint,
     );
 
@@ -820,8 +896,14 @@ class PrayerProgressPainter extends CustomPainter {
                 progress);
 
     canvas.drawLine(
-      Offset(startX, centerY),
-      Offset(currentX, centerY),
+      Offset(
+        startX,
+        centerY,
+      ),
+      Offset(
+        currentX,
+        centerY,
+      ),
       activePaint,
     );
 
@@ -832,7 +914,10 @@ class PrayerProgressPainter extends CustomPainter {
           PaintingStyle.fill;
 
     canvas.drawCircle(
-      Offset(currentX, centerY),
+      Offset(
+        currentX,
+        centerY,
+      ),
       7,
       dotPaint,
     );
@@ -846,7 +931,10 @@ class PrayerProgressPainter extends CustomPainter {
       ..strokeWidth = 2;
 
     canvas.drawCircle(
-      Offset(currentX, centerY),
+      Offset(
+        currentX,
+        centerY,
+      ),
       7,
       borderPaint,
     );

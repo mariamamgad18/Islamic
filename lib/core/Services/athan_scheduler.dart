@@ -6,7 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 @singleton
 class AthanScheduler {
-  AthanScheduler({required this.prayerTimesUseCase});
+  AthanScheduler({
+    required this.prayerTimesUseCase,
+  });
 
   final PrayerTimesUseCase prayerTimesUseCase;
 
@@ -15,24 +17,33 @@ class AthanScheduler {
   );
 
   // =========================================================
-  // MASTER ATHAN STATE
+  // SHARED PREFERENCES KEYS
   // =========================================================
 
-  static const String athanMasterKey = 'athan_master_enabled';
+  static const String athanMasterKey =
+      'athan_master_enabled';
 
-  // Default = ON
-  static final ValueNotifier<bool> athanEnabledNotifier = ValueNotifier<bool>(
-    true,
-  );
+  static const String prayerEnabledPrefix =
+      'azan_enabled_';
+
+  static const String prayerNamePrefix =
+      'azan_prayer_name_';
 
   // =========================================================
-  // NUMBER OF DAYS TO SCHEDULE
+  // MASTER ATHAN NOTIFIER
+  // =========================================================
+
+  static final ValueNotifier<bool> athanEnabledNotifier =
+  ValueNotifier<bool>(false);
+
+  // =========================================================
+  // SCHEDULE CONFIG
   // =========================================================
 
   static const int scheduledDays = 7;
 
   // =========================================================
-  // PRAYER IDS
+  // PRAYER BASE IDS
   // =========================================================
 
   static const Map<String, int> prayerBaseIds = {
@@ -44,7 +55,7 @@ class AthanScheduler {
   };
 
   // =========================================================
-  // PREF KEYS
+  // PRAYER PREFERENCE IDS
   // =========================================================
 
   static const Map<String, int> preferenceIds = {
@@ -62,20 +73,16 @@ class AthanScheduler {
   Future<bool> initializeAthanMasterState() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final enabled = prefs.getBool(athanMasterKey) ?? true;
+    final enabled =
+        prefs.getBool(athanMasterKey) ?? false;
 
     athanEnabledNotifier.value = enabled;
 
-    /*
-     * IMPORTANT:
-     *
-     * Keep Android native state synchronized with
-     * Flutter SharedPreferences.
-     *
-     * This allows AthanReceiver to make the decision
-     * even when Flutter is not running.
-     */
     await _setNativeMasterState(enabled);
+
+    debugPrint(
+      'INITIAL ATHAN MASTER STATE => $enabled',
+    );
 
     return enabled;
   }
@@ -87,7 +94,8 @@ class AthanScheduler {
   Future<bool> isAthanEnabled() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final enabled = prefs.getBool(athanMasterKey) ?? true;
+    final enabled =
+        prefs.getBool(athanMasterKey) ?? false;
 
     athanEnabledNotifier.value = enabled;
 
@@ -98,40 +106,59 @@ class AthanScheduler {
 
   // =========================================================
   // SET MASTER STATE
+  //
+  // IMPORTANT:
+  //
+  // Master ON:
+  //     Does NOT enable any prayer.
+  //
+  // Master OFF:
+  //     Disables every prayer and cancels all alarms.
+  //
   // =========================================================
 
-  Future<void> setAthanEnabled(bool enabled) async {
-    final prefs = await SharedPreferences.getInstance();
+  Future<void> setAthanEnabled(bool enabled,) async {
+    final prefs =
+    await SharedPreferences.getInstance();
 
-    await prefs.setBool(athanMasterKey, enabled);
+    // Save master state
+    await prefs.setBool(
+      athanMasterKey,
+      enabled,
+    );
 
     athanEnabledNotifier.value = enabled;
 
-    /*
-     * Update native state FIRST.
-     *
-     * This prevents a race where an alarm fires
-     * at exactly the same moment the user turns
-     * the master switch OFF.
-     */
+    // Tell Android native side
     await _setNativeMasterState(enabled);
 
-    debugPrint('MASTER ATHAN => $enabled');
+    debugPrint(
+      'MASTER ATHAN => $enabled',
+    );
 
     // =======================================================
     // MASTER OFF
     // =======================================================
 
     if (!enabled) {
+      // Cancel every scheduled alarm
       await cancelAll();
 
-      for (final prayerKey in prayerBaseIds.keys) {
-        final preferenceId = preferenceIds[prayerKey]!;
+      // Disable every prayer
+      for (final prayerKey
+      in prayerBaseIds.keys) {
+        final preferenceId =
+        preferenceIds[prayerKey]!;
 
-        await prefs.setBool('azan_enabled_$preferenceId', false);
+        await prefs.setBool(
+          '$prayerEnabledPrefix$preferenceId',
+          false,
+        );
       }
 
-      debugPrint('MASTER ATHAN OFF => ALL PRAYERS DISABLED');
+      debugPrint(
+        'MASTER OFF => ALL PRAYERS DISABLED',
+      );
 
       return;
     }
@@ -140,63 +167,268 @@ class AthanScheduler {
     // MASTER ON
     // =======================================================
 
-    for (final prayerKey in prayerBaseIds.keys) {
-      final preferenceId = preferenceIds[prayerKey]!;
-
-      await prefs.setBool('azan_enabled_$preferenceId', true);
-    }
-
-    debugPrint('MASTER ATHAN ON => ALL PRAYERS ENABLED');
+    // IMPORTANT:
+    //
+    // We intentionally DO NOT enable all prayers here.
+    //
+    // The user must manually enable Fajr,
+    // Dhuhr, Asr, Maghrib or Isha.
+    //
+    debugPrint(
+      'MASTER ON => PRAYER STATES PRESERVED',
+    );
   }
 
   // =========================================================
-  // SET NATIVE MASTER STATE
+  // SET INDIVIDUAL PRAYER
+  //
+  // This is the main method that PrayerTimesScreen
+  // should use.
+  //
+  // Example:
+  //
+  // await setPrayerEnabled(
+  //   prayerKey: 'fajr',
+  //   enabled: true,
+  // );
+  //
   // =========================================================
 
-  Future<void> _setNativeMasterState(bool enabled) async {
+  Future<void> setPrayerEnabled({
+    required String prayerKey,
+    required bool enabled,
+    String? prayerName,
+  }) async {
+    // Validate prayer
+    if (!prayerBaseIds.containsKey(prayerKey)) {
+      debugPrint(
+        'INVALID PRAYER KEY => $prayerKey',
+      );
+
+      return;
+    }
+
+    final prefs =
+    await SharedPreferences.getInstance();
+
+    final preferenceId =
+    preferenceIds[prayerKey]!;
+
+    // =======================================================
+    // MASTER MUST BE ON
+    // =======================================================
+
+    final masterEnabled =
+        prefs.getBool(athanMasterKey) ?? false;
+
+    if (!masterEnabled) {
+      // Master is OFF.
+      // Do not allow individual prayer activation.
+      //
+      // We also make sure the prayer remains disabled.
+
+      await prefs.setBool(
+        '$prayerEnabledPrefix$preferenceId',
+        false,
+      );
+
+      debugPrint(
+        'CANNOT ENABLE $prayerKey => MASTER ATHAN IS OFF',
+      );
+
+      return;
+    }
+
+    // =======================================================
+    // SAVE PRAYER STATE
+    // =======================================================
+
+    await prefs.setBool(
+      '$prayerEnabledPrefix$preferenceId',
+      enabled,
+    );
+
+    // Save prayer name if supplied
+    if (prayerName != null &&
+        prayerName
+            .trim()
+            .isNotEmpty) {
+      await prefs.setString(
+        '$prayerNamePrefix$prayerKey',
+        prayerName,
+      );
+    }
+
+    debugPrint(
+      'PRAYER $prayerKey => $enabled',
+    );
+
+    // =======================================================
+    // PRAYER OFF
+    // =======================================================
+
+    if (!enabled) {
+      await cancelPrayer(
+        prayerKey: prayerKey,
+      );
+
+      return;
+    }
+
+    // =======================================================
+    // PRAYER ON
+    //
+    // We don't schedule here because scheduling requires
+    // location and prayer times.
+    //
+    // PrayerTimesScreen should call scheduleNextDays()
+    // after changing the state.
+    // =======================================================
+
+    debugPrint(
+      'PRAYER $prayerKey ENABLED',
+    );
+  }
+
+  // =========================================================
+  // GET INDIVIDUAL PRAYER STATE
+  // =========================================================
+
+  Future<bool> isPrayerEnabled(String prayerKey,) async {
+    if (!prayerBaseIds.containsKey(prayerKey)) {
+      return false;
+    }
+
+    final prefs =
+    await SharedPreferences.getInstance();
+
+    final preferenceId =
+    preferenceIds[prayerKey]!;
+
+    return prefs.getBool(
+      '$prayerEnabledPrefix$preferenceId',
+    ) ??
+        false;
+  }
+
+  // =========================================================
+  // GET ALL PRAYER STATES
+  // =========================================================
+
+  Future<Map<String, bool>>
+  getPrayerStates() async {
+    final prefs =
+    await SharedPreferences.getInstance();
+
+    final states = <String, bool>{};
+
+    for (final prayerKey
+    in prayerBaseIds.keys) {
+      final preferenceId =
+      preferenceIds[prayerKey]!;
+
+      states[prayerKey] =
+          prefs.getBool(
+            '$prayerEnabledPrefix$preferenceId',
+          ) ??
+              false;
+    }
+
+    return states;
+  }
+
+  // =========================================================
+  // ENABLED PRAYERS
+  // =========================================================
+
+  Future<List<String>>
+  getEnabledPrayers() async {
+    final prefs =
+    await SharedPreferences.getInstance();
+
+    final enabledPrayers =
+    <String>[];
+
+    for (final prayerKey
+    in prayerBaseIds.keys) {
+      final preferenceId =
+      preferenceIds[prayerKey]!;
+
+      final enabled =
+          prefs.getBool(
+            '$prayerEnabledPrefix$preferenceId',
+          ) ??
+              false;
+
+      if (enabled) {
+        enabledPrayers.add(
+          prayerKey,
+        );
+      }
+    }
+
+    return enabledPrayers;
+  }
+
+  // =========================================================
+  // NATIVE MASTER STATE
+  // =========================================================
+
+  Future<void> _setNativeMasterState(bool enabled,) async {
     try {
-      await _channel.invokeMethod('setNativeAthanMasterEnabled', {
-        'enabled': enabled,
-      });
+      await _channel.invokeMethod(
+        'setNativeAthanMasterEnabled',
+        {
+          'enabled': enabled,
+        },
+      );
 
-      debugPrint('NATIVE MASTER ATHAN => $enabled');
+      debugPrint(
+        'NATIVE MASTER ATHAN => $enabled',
+      );
     } catch (e) {
-      debugPrint('ERROR SETTING NATIVE MASTER STATE: $e');
+      debugPrint(
+        'ERROR SETTING NATIVE MASTER STATE: $e',
+      );
     }
   }
 
   // =========================================================
-  // CHECK FULL SCREEN INTENT PERMISSION
+  // FULL SCREEN INTENT
   // =========================================================
 
   Future<bool> canUseFullScreenIntent() async {
     try {
-      final result = await _channel.invokeMethod<bool>(
+      final result =
+      await _channel.invokeMethod<bool>(
         'canUseFullScreenIntent',
       );
 
       return result ?? false;
     } catch (e) {
-      debugPrint('ERROR CHECKING FULL SCREEN INTENT: $e');
+      debugPrint(
+        'ERROR CHECKING FULL SCREEN INTENT: $e',
+      );
 
       return false;
     }
   }
 
-  // =========================================================
-  // OPEN FULL SCREEN INTENT SETTINGS
-  // =========================================================
-
-  Future<void> openFullScreenIntentSettings() async {
+  Future<void>
+  openFullScreenIntentSettings() async {
     try {
-      await _channel.invokeMethod('openFullScreenIntentSettings');
+      await _channel.invokeMethod(
+        'openFullScreenIntentSettings',
+      );
     } catch (e) {
-      debugPrint('ERROR OPENING FULL SCREEN INTENT SETTINGS: $e');
+      debugPrint(
+        'ERROR OPENING FULL SCREEN INTENT SETTINGS: $e',
+      );
     }
   }
 
   // =========================================================
-  // SCHEDULE ALL ENABLED PRAYERS
+  // SCHEDULE NEXT DAYS
   // =========================================================
 
   Future<void> scheduleNextDays({
@@ -206,119 +438,227 @@ class AthanScheduler {
     int days = scheduledDays,
   }) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs =
+      await SharedPreferences.getInstance();
 
-      final masterEnabled = prefs.getBool(athanMasterKey) ?? true;
+      // =====================================================
+      // MASTER STATE
+      // =====================================================
 
-      athanEnabledNotifier.value = masterEnabled;
+      final masterEnabled =
+          prefs.getBool(athanMasterKey) ?? false;
 
-      await _setNativeMasterState(masterEnabled);
+      athanEnabledNotifier.value =
+          masterEnabled;
+
+      await _setNativeMasterState(
+        masterEnabled,
+      );
+
+      // =====================================================
+      // MASTER OFF
+      // =====================================================
 
       if (!masterEnabled) {
-        debugPrint('MASTER ATHAN IS OFF => NO SCHEDULING');
+        debugPrint(
+          'MASTER ATHAN OFF => NO SCHEDULING',
+        );
 
         return;
       }
 
       final now = DateTime.now();
 
-      debugPrint('========================================');
-
-      debugPrint('START SCHEDULING ATHAN');
-
-      debugPrint('LATITUDE: $latitude');
-
-      debugPrint('LONGITUDE: $longitude');
-
-      debugPrint('DAYS: $days');
-
-      debugPrint('MASTER ATHAN: $masterEnabled');
-
-      debugPrint('========================================');
-
       // =====================================================
-      // CHECK ENABLED PRAYERS
+      // GET ONLY ENABLED PRAYERS
       // =====================================================
 
-      final enabledPrayers = <String>[];
+      final enabledPrayers =
+      <String>[];
 
-      for (final prayerKey in prayerBaseIds.keys) {
-        final preferenceId = preferenceIds[prayerKey]!;
+      for (final prayerKey
+      in prayerBaseIds.keys) {
+        final preferenceId =
+        preferenceIds[prayerKey]!;
 
-        final enabled = prefs.getBool('azan_enabled_$preferenceId') ?? true;
+        final enabled =
+            prefs.getBool(
+              '$prayerEnabledPrefix$preferenceId',
+            ) ??
+                false;
 
         if (enabled) {
-          enabledPrayers.add(prayerKey);
+          enabledPrayers.add(
+            prayerKey,
+          );
         }
       }
 
+      // =====================================================
+      // NOTHING ENABLED
+      // =====================================================
+
       if (enabledPrayers.isEmpty) {
-        debugPrint('NO ENABLED ATHAN PRAYERS');
+        debugPrint(
+          'NO ENABLED ATHAN PRAYERS => NOTHING TO SCHEDULE',
+        );
 
         return;
       }
 
-      debugPrint('ENABLED PRAYERS: $enabledPrayers');
+      debugPrint(
+        'ENABLED PRAYERS => $enabledPrayers',
+      );
 
       // =====================================================
-      // GET LOCALIZED PRAYER NAMES
+      // GET PRAYER NAMES
       // =====================================================
 
-      final prayerNames = <String, String>{};
+      final prayerNames =
+      <String, String>{};
 
-      for (final prayerKey in enabledPrayers) {
+      for (final prayerKey
+      in enabledPrayers) {
         final name =
-            prefs.getString('azan_prayer_name_$prayerKey') ??
-            _getDefaultPrayerName(prayerKey);
+            prefs.getString(
+              '$prayerNamePrefix$prayerKey',
+            ) ??
+                _getDefaultPrayerName(
+                  prayerKey,
+                );
 
         prayerNames[prayerKey] = name;
       }
 
       // =====================================================
-      // LOOP THROUGH DAYS
+      // SCHEDULE DAYS
       // =====================================================
 
-      for (int dayIndex = 0; dayIndex < days; dayIndex++) {
-        final currentMasterState = prefs.getBool(athanMasterKey) ?? true;
+      for (
+      int dayIndex = 0;
+      dayIndex < days;
+      dayIndex++
+      ) {
+        // ===================================================
+        // CHECK MASTER AGAIN
+        // ===================================================
+
+        final currentMasterState =
+            prefs.getBool(
+              athanMasterKey,
+            ) ??
+                false;
 
         if (!currentMasterState) {
-          debugPrint('MASTER ATHAN TURNED OFF DURING SCHEDULING');
+          debugPrint(
+            'MASTER TURNED OFF DURING SCHEDULING',
+          );
 
-          await _setNativeMasterState(false);
+          await _setNativeMasterState(
+            false,
+          );
 
           return;
         }
 
-        final date = now.add(Duration(days: dayIndex));
+        // ===================================================
+        // CURRENT DATE
+        // ===================================================
 
-        final dateString = _formatDate(date);
+        final date = now.add(
+          Duration(
+            days: dayIndex,
+          ),
+        );
 
-        debugPrint('FETCHING PRAYER TIMES FOR: $dateString');
+        final dateString =
+        _formatDate(date);
 
         try {
-          final result = await prayerTimesUseCase.invoke(
+          // =================================================
+          // GET PRAYER TIMES
+          // =================================================
+
+          final result =
+          await prayerTimesUseCase.invoke(
             date: dateString,
             latitude: latitude,
             longitude: longitude,
             method: method,
           );
 
-          final timings = result.data.timings;
+          final timings =
+              result.data.timings;
 
-          // ===================================================
-          // SCHEDULE EACH ENABLED PRAYER
-          // ===================================================
+          // =================================================
+          // SCHEDULE ENABLED PRAYERS
+          // =================================================
 
-          for (final prayerKey in enabledPrayers) {
-            final time = _getPrayerTime(prayerKey, timings);
+          for (final prayerKey
+          in enabledPrayers) {
+            // -----------------------------------------------
+            // CHECK MASTER
+            // -----------------------------------------------
 
-            if (time == null) {
-              debugPrint('NO TIME FOR $prayerKey');
+            final masterStillEnabled =
+                prefs.getBool(
+                  athanMasterKey,
+                ) ??
+                    false;
+
+            if (!masterStillEnabled) {
+              debugPrint(
+                'MASTER OFF => STOP SCHEDULING',
+              );
+
+              return;
+            }
+
+            // -----------------------------------------------
+            // CHECK PRAYER STATE
+            // -----------------------------------------------
+
+            final preferenceId =
+            preferenceIds[prayerKey]!;
+
+            final prayerStillEnabled =
+                prefs.getBool(
+                  '$prayerEnabledPrefix$preferenceId',
+                ) ??
+                    false;
+
+            if (!prayerStillEnabled) {
+              debugPrint(
+                '$prayerKey DISABLED => SKIP',
+              );
 
               continue;
             }
 
-            final prayerDateTime = DateTime(
+            // -----------------------------------------------
+            // GET TIME
+            // -----------------------------------------------
+
+            final time =
+            _getPrayerTime(
+              prayerKey,
+              timings,
+            );
+
+            if (time == null) {
+              debugPrint(
+                'NO TIME FOR $prayerKey',
+              );
+
+              continue;
+            }
+
+            // -----------------------------------------------
+            // CREATE DATETIME
+            // -----------------------------------------------
+
+            final prayerDateTime =
+            DateTime(
               date.year,
               date.month,
               date.day,
@@ -326,52 +666,69 @@ class AthanScheduler {
               time.minute,
             );
 
-            if (!prayerDateTime.isAfter(now)) {
-              debugPrint(
-                'SKIP PAST TIME: '
-                '$prayerKey $prayerDateTime',
-              );
+            // -----------------------------------------------
+            // SKIP PAST TIMES
+            // -----------------------------------------------
 
+            if (!prayerDateTime.isAfter(
+              now,
+            )) {
               continue;
             }
 
-            final athanId = _generateAthanId(date, prayerKey);
+            // -----------------------------------------------
+            // GENERATE UNIQUE ID
+            // -----------------------------------------------
+
+            final athanId =
+            _generateAthanId(
+              date,
+              prayerKey,
+            );
+
+            // -----------------------------------------------
+            // SCHEDULE NATIVE ALARM
+            // -----------------------------------------------
 
             await _scheduleNativeAthan(
               athanId: athanId,
-              prayerName: prayerNames[prayerKey]!,
+              prayerName:
+              prayerNames[prayerKey]!,
               prayerKey: prayerKey,
-              timestamp: prayerDateTime.millisecondsSinceEpoch,
+              timestamp:
+              prayerDateTime
+                  .millisecondsSinceEpoch,
             );
 
             debugPrint(
-              'SCHEDULED: '
-              '$prayerKey | '
-              '$prayerDateTime | '
-              'ID: $athanId',
+              'SCHEDULED $prayerKey '
+                  '=> $prayerDateTime',
             );
           }
         } catch (e, stackTrace) {
-          debugPrint('ERROR FETCHING DATE $dateString: $e');
+          debugPrint(
+            'ERROR FETCHING DATE '
+                '$dateString: $e',
+          );
 
-          debugPrint('$stackTrace');
+          debugPrint(
+            '$stackTrace',
+          );
         }
       }
-
-      debugPrint('========================================');
-
-      debugPrint('ATHAN SCHEDULING FINISHED');
-
-      debugPrint('========================================');
     } catch (e, stackTrace) {
-      debugPrint('ERROR IN ATHAN SCHEDULER: $e');
+      debugPrint(
+        'ERROR IN ATHAN SCHEDULER: $e',
+      );
 
-      debugPrint('$stackTrace');
+      debugPrint(
+        '$stackTrace',
+      );
     }
   }
 
   // =========================================================
-  // SCHEDULE ONE NATIVE ALARM
+  // NATIVE SCHEDULE
   // =========================================================
 
   Future<void> _scheduleNativeAthan({
@@ -381,19 +738,24 @@ class AthanScheduler {
     required int timestamp,
   }) async {
     try {
-      await _channel.invokeMethod('scheduleAthan', {
-        'athanId': athanId,
-        'prayerName': prayerName,
-        'prayerKey': prayerKey,
-        'timestamp': timestamp,
-      });
+      await _channel.invokeMethod(
+        'scheduleAthan',
+        {
+          'athanId': athanId,
+          'prayerName': prayerName,
+          'prayerKey': prayerKey,
+          'timestamp': timestamp,
+        },
+      );
     } on PlatformException catch (e) {
       debugPrint(
         'NATIVE ATHAN ERROR: '
-        '${e.code} - ${e.message}',
+            '${e.code} - ${e.message}',
       );
     } catch (e) {
-      debugPrint('ERROR SCHEDULING NATIVE ATHAN: $e');
+      debugPrint(
+        'ERROR SCHEDULING NATIVE ATHAN: $e',
+      );
     }
   }
 
@@ -401,71 +763,103 @@ class AthanScheduler {
   // CANCEL ONE PRAYER
   // =========================================================
 
-  Future<void> cancelPrayer({required String prayerKey}) async {
+  Future<void> cancelPrayer({
+    required String prayerKey,
+  }) async {
+    if (!prayerBaseIds.containsKey(prayerKey)) {
+      debugPrint(
+        'INVALID PRAYER KEY => $prayerKey',
+      );
+
+      return;
+    }
+
     try {
-      await _channel.invokeMethod('cancelAthanPrayer', {
-        'prayerKey': prayerKey,
-      });
+      await _channel.invokeMethod(
+        'cancelAthanPrayer',
+        {
+          'prayerKey': prayerKey,
+        },
+      );
 
-      debugPrint('CANCELLED ALL ATHAN FOR: $prayerKey');
+      debugPrint(
+        'CANCELLED ALL ATHAN FOR: $prayerKey',
+      );
     } catch (e, stackTrace) {
-      debugPrint('ERROR CANCELLING $prayerKey: $e');
+      debugPrint(
+        'ERROR CANCELLING $prayerKey: $e',
+      );
 
-      debugPrint('$stackTrace');
+      debugPrint(
+        '$stackTrace',
+      );
     }
   }
 
   // =========================================================
-  // CANCEL ALL ATHAN
+  // CANCEL ALL
   // =========================================================
 
   Future<void> cancelAll() async {
     try {
-      await _channel.invokeMethod('cancelAllAthan');
+      await _channel.invokeMethod(
+        'cancelAllAthan',
+      );
 
-      debugPrint('ALL ATHAN ALARMS CANCELLED');
+      debugPrint(
+        'ALL ATHAN ALARMS CANCELLED',
+      );
     } catch (e, stackTrace) {
-      debugPrint('ERROR CANCELLING ALL ATHAN: $e');
+      debugPrint(
+        'ERROR CANCELLING ALL ATHAN: $e',
+      );
 
-      debugPrint('$stackTrace');
+      debugPrint(
+        '$stackTrace',
+      );
     }
   }
 
   // =========================================================
-  // CHECK EXACT ALARM PERMISSION
+  // EXACT ALARM
   // =========================================================
 
-  Future<bool> canScheduleExactAlarms() async {
+  Future<bool>
+  canScheduleExactAlarms() async {
     try {
-      final result = await _channel.invokeMethod<bool>(
+      final result =
+      await _channel.invokeMethod<bool>(
         'canScheduleExactAlarms',
       );
 
       return result ?? false;
     } catch (e) {
-      debugPrint('ERROR CHECKING EXACT ALARM PERMISSION: $e');
+      debugPrint(
+        'ERROR CHECKING EXACT ALARM: $e',
+      );
 
       return false;
     }
   }
 
-  // =========================================================
-  // OPEN EXACT ALARM SETTINGS
-  // =========================================================
-
-  Future<void> openExactAlarmSettings() async {
+  Future<void>
+  openExactAlarmSettings() async {
     try {
-      await _channel.invokeMethod('openExactAlarmSettings');
+      await _channel.invokeMethod(
+        'openExactAlarmSettings',
+      );
     } catch (e) {
-      debugPrint('ERROR OPENING EXACT ALARM SETTINGS: $e');
+      debugPrint(
+        'ERROR OPENING EXACT ALARM SETTINGS: $e',
+      );
     }
   }
 
   // =========================================================
-  // FORMAT DATE
+  // DATE FORMAT
   // =========================================================
 
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime date,) {
     return '${date.day.toString().padLeft(2, '0')}-'
         '${date.month.toString().padLeft(2, '0')}-'
         '${date.year}';
@@ -475,7 +869,8 @@ class AthanScheduler {
   // GET PRAYER TIME
   // =========================================================
 
-  _PrayerTime? _getPrayerTime(String prayerKey, dynamic timings) {
+  _PrayerTime? _getPrayerTime(String prayerKey,
+      dynamic timings,) {
     String? value;
 
     switch (prayerKey) {
@@ -500,46 +895,67 @@ class AthanScheduler {
         break;
     }
 
-    if (value == null || value.trim().isEmpty) {
+    if (value == null ||
+        value
+            .trim()
+            .isEmpty) {
       return null;
     }
 
     try {
-      final cleanValue = value.trim().split(' ').first;
+      final cleanValue =
+          value
+              .trim()
+              .split(' ')
+              .first;
 
-      final parts = cleanValue.split(':');
+      final parts =
+      cleanValue.split(':');
 
       if (parts.length < 2) {
         return null;
       }
 
-      final hour = int.parse(parts[0]);
+      final hour =
+      int.parse(parts[0]);
 
-      final minute = int.parse(parts[1]);
+      final minute =
+      int.parse(parts[1]);
 
-      return _PrayerTime(hour: hour, minute: minute);
+      return _PrayerTime(
+        hour: hour,
+        minute: minute,
+      );
     } catch (e) {
-      debugPrint('ERROR PARSING TIME: $value');
+      debugPrint(
+        'ERROR PARSING TIME: $value',
+      );
 
       return null;
     }
   }
 
   // =========================================================
-  // GENERATE UNIQUE ID
+  // GENERATE UNIQUE ATHAN ID
   // =========================================================
 
-  int _generateAthanId(DateTime date, String prayerKey) {
-    final baseId = prayerBaseIds[prayerKey]!;
+  int _generateAthanId(DateTime date,
+      String prayerKey,) {
+    final baseId =
+    prayerBaseIds[prayerKey]!;
 
-    return (date.year * 10000 + date.month * 100 + date.day) * 10 + baseId;
+    return (date.year * 10000 +
+        date.month * 100 +
+        date.day) *
+        10 +
+        baseId;
   }
 
   // =========================================================
   // DEFAULT PRAYER NAME
   // =========================================================
 
-  String _getDefaultPrayerName(String prayerKey) {
+  String _getDefaultPrayerName(String prayerKey,) {
     switch (prayerKey) {
       case 'fajr':
         return 'الفجر';
@@ -563,13 +979,15 @@ class AthanScheduler {
 }
 
 // ===========================================================
-// PRIVATE TIME CLASS
+// PRAYER TIME MODEL
 // ===========================================================
 
 class _PrayerTime {
   final int hour;
-
   final int minute;
 
-  const _PrayerTime({required this.hour, required this.minute});
+  const _PrayerTime({
+    required this.hour,
+    required this.minute,
+  });
 }

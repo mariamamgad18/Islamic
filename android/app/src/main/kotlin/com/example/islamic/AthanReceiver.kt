@@ -34,41 +34,32 @@ class AthanReceiver : BroadcastReceiver() {
                 Context.MODE_PRIVATE
             )
 
-        /*
-         * Default = ON
-         *
-         * This is intentionally native so the alarm can
-         * make the decision even when Flutter is not running.
-         */
+        // =====================================================
+        // MASTER CHECK
+        // =====================================================
+
         val masterEnabled =
             prefs.getBoolean(
                 NATIVE_MASTER_ENABLED_KEY,
-                true
+                false
             )
 
-        Log.d(
-            TAG,
-            "NATIVE MASTER ATHAN: $masterEnabled"
-        )
+        val athanId =
+            intent.getIntExtra(
+                "athan_id",
+                0
+            )
 
-        /*
-         * MASTER OFF
-         *
-         * Do not start audio.
-         * Do not open AthanScreen.
-         */
+        // =====================================================
+        // MASTER OFF
+        // =====================================================
+
         if (!masterEnabled) {
 
             Log.d(
                 TAG,
-                "MASTER OFF => IGNORING ATHAN ALARM"
+                "MASTER OFF => IGNORING ATHAN"
             )
-
-            val athanId =
-                intent.getIntExtra(
-                    "athan_id",
-                    0
-                )
 
             removeFiredAlarm(
                 context,
@@ -78,11 +69,9 @@ class AthanReceiver : BroadcastReceiver() {
             return
         }
 
-        val athanId =
-            intent.getIntExtra(
-                "athan_id",
-                0
-            )
+        // =====================================================
+        // DATA
+        // =====================================================
 
         val prayerName =
             intent.getStringExtra(
@@ -94,47 +83,13 @@ class AthanReceiver : BroadcastReceiver() {
                 "prayer_key"
             ) ?: ""
 
-        Log.d(
-            TAG,
-            "================================"
-        )
-
-        Log.d(
-            TAG,
-            "ATHAN RECEIVED"
-        )
-
-        Log.d(
-            TAG,
-            "ID: $athanId"
-        )
-
-        Log.d(
-            TAG,
-            "Prayer: $prayerName"
-        )
-
-        Log.d(
-            TAG,
-            "Prayer Key: $prayerKey"
-        )
-
-        Log.d(
-            TAG,
-            "================================"
-        )
-
-        // =====================================================
-        // REMOVE FIRED ALARM FROM SAVED ALARMS
-        // =====================================================
-
         removeFiredAlarm(
             context,
             athanId
         )
 
         // =====================================================
-        // START ATHAN FOREGROUND SERVICE
+        // START SERVICE
         // =====================================================
 
         val serviceIntent =
@@ -162,19 +117,12 @@ class AthanReceiver : BroadcastReceiver() {
         )
 
         try {
-
-            ContextCompat.startForegroundService(
-                context,
-                serviceIntent
-            )
-
-            Log.d(
-                TAG,
-                "ATHAN SERVICE STARTED SUCCESSFULLY"
-            )
-
+            ContextCompat
+                .startForegroundService(
+                    context,
+                    serviceIntent
+                )
         } catch (e: Exception) {
-
             Log.e(
                 TAG,
                 "ERROR STARTING ATHAN SERVICE",
@@ -183,15 +131,10 @@ class AthanReceiver : BroadcastReceiver() {
         }
     }
 
-    // =====================================================
-    // REMOVE FIRED ALARM
-    // =====================================================
-
     private fun removeFiredAlarm(
         context: Context,
         athanId: Int
     ) {
-
         if (athanId == 0) {
             return
         }

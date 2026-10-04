@@ -20,13 +20,6 @@ class GreenContainer extends StatelessWidget {
   // =========================================================
   // CALLBACK
   // =========================================================
-  //
-  // HomeScreen هيبعت الدالة دي.
-  //
-  // لما نرجع من Settings بعد تغيير الـ Location،
-  // هننادي عليها علشان Home يعمل reload.
-  //
-  // =========================================================
 
   final Future<void> Function()? onLocationUpdated;
 
@@ -36,8 +29,12 @@ class GreenContainer extends StatelessWidget {
     AppLocalizations.of(context)!;
 
     return Container(
-      width: 430.w,
-      height: 478.h,
+      width: double.infinity,
+
+      constraints: BoxConstraints(
+        minHeight: 478.h,
+      ),
+
       decoration: BoxDecoration(
         color: AppColors.DarkGreenColor,
         borderRadius: BorderRadius.circular(48),
@@ -48,11 +45,13 @@ class GreenContainer extends StatelessWidget {
           fit: BoxFit.fill,
         ),
       ),
+
       child: Padding(
         padding: EdgeInsets.symmetric(
           vertical: 24.h,
           horizontal: 20.0.w,
         ),
+
         child: Column(
           children: [
             Row(
@@ -77,6 +76,7 @@ class GreenContainer extends StatelessWidget {
                       await onLocationUpdated?.call();
                     }
                   },
+
                   child: Image(
                     image: AssetImage(
                       AppImages.settinIcon,
@@ -90,11 +90,6 @@ class GreenContainer extends StatelessWidget {
                 // THEME
                 // =================================================
 
-                Image(
-                  image: AssetImage(
-                    AppImages.themeIcon,
-                  ),
-                ),
 
                 const Spacer(),
 

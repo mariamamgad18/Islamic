@@ -34,9 +34,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   late final AthanScheduler
   _athanScheduler;
 
-  // =========================================================
-  // INIT
-  // =========================================================
+// =========================================================
+// INIT
+// =========================================================
 
   @override
   void initState() {
@@ -57,14 +57,13 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     });
   }
 
-  // =========================================================
-  // LOAD SAVED LOCATION
-  // =========================================================
+// =========================================================
+// LOAD SAVED LOCATION
+// =========================================================
 
   Future<void> _loadSavedLocation() async {
     final hasLocation =
-    await AppPreferences
-        .hasSavedLocation();
+    await AppPreferences.hasSavedLocation();
 
     if (!mounted) return;
 
@@ -76,9 +75,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         .loadSavedLocation();
   }
 
-  // =========================================================
-  // CURRENT DATE
-  // =========================================================
+// =========================================================
+// CURRENT DATE
+// =========================================================
 
   String _getCurrentDate() {
     final now = DateTime.now();
@@ -88,22 +87,29 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         '${now.year}';
   }
 
-  // =========================================================
-  // SCHEDULE ATHAN
-  // =========================================================
+// =========================================================
+// SCHEDULE ATHAN
+// =========================================================
+//
+// IMPORTANT:
+// This function only schedules according to the individual
+// prayer states saved in SharedPreferences.
+//
+// It DOES NOT enable all prayers by itself.
+//
+// =========================================================
 
   Future<void> _scheduleAthan({
     required double latitude,
     required double longitude,
   }) async {
     try {
-      // =====================================================
-      // MASTER ATHAN CHECK
-      // =====================================================
+// =======================================================
+// MASTER ATHAN CHECK
+// =======================================================
 
       final masterEnabled =
-      await _athanScheduler
-          .isAthanEnabled();
+      await _athanScheduler.isAthanEnabled();
 
       if (!masterEnabled) {
         debugPrint(
@@ -113,25 +119,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         return;
       }
 
-      debugPrint(
-        '================================',
-      );
-
-      debugPrint(
-        'STARTING ATHAN SCHEDULER',
-      );
-
-      debugPrint(
-        'LAT: $latitude',
-      );
-
-      debugPrint(
-        'LNG: $longitude',
-      );
-
-      debugPrint(
-        '================================',
-      );
+// =======================================================
+// EXACT ALARM PERMISSION
+// =======================================================
 
       final canSchedule =
       await _athanScheduler
@@ -145,13 +135,15 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         return;
       }
 
-      await _athanScheduler
-          .scheduleNextDays(
+// =======================================================
+// SCHEDULE
+// =======================================================
+
+      await _athanScheduler.scheduleNextDays(
         latitude: latitude,
         longitude: longitude,
         method: 5,
-        days:
-        AthanScheduler.scheduledDays,
+        days: AthanScheduler.scheduledDays,
       );
 
       debugPrint(
@@ -168,28 +160,27 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     }
   }
 
-  // =========================================================
-  // HANDLE AZAN SWITCH
-  // =========================================================
+// =========================================================
+// HANDLE INDIVIDUAL AZAN SWITCH
+// =========================================================
 
   Future<void> _onAzanToggle(String prayerKey,
       bool enabled,
       double latitude,
       double longitude,) async {
     try {
-      // =====================================================
-      // MASTER CHECK
-      // =====================================================
+// =======================================================
+// CHECK MASTER
+// =======================================================
 
       final masterEnabled =
-      await _athanScheduler
-          .isAthanEnabled();
+      await _athanScheduler.isAthanEnabled();
 
-      // =====================================================
-      // MASTER OFF
-      // =====================================================
+// =======================================================
+// MASTER OFF
+// =======================================================
 
-      if (!masterEnabled && enabled) {
+      if (!masterEnabled) {
         debugPrint(
           'MASTER ATHAN OFF => '
               'CANNOT ENABLE $prayerKey',
@@ -198,25 +189,32 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         return;
       }
 
-      // =====================================================
-      // ENABLE
-      // =====================================================
+// =======================================================
+// ENABLE INDIVIDUAL PRAYER
+// =======================================================
 
       if (enabled) {
         await _scheduleAthan(
           latitude: latitude,
           longitude: longitude,
         );
+
+        debugPrint(
+          '$prayerKey ATHAN ENABLED',
+        );
       }
 
-      // =====================================================
-      // DISABLE
-      // =====================================================
+// =======================================================
+// DISABLE INDIVIDUAL PRAYER
+// =======================================================
 
       else {
-        await _athanScheduler
-            .cancelPrayer(
+        await _athanScheduler.cancelPrayer(
           prayerKey: prayerKey,
+        );
+
+        debugPrint(
+          '$prayerKey ATHAN DISABLED',
         );
       }
     } catch (e, stackTrace) {
@@ -230,33 +228,31 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     }
   }
 
-  // =========================================================
-  // BUILD
-  // =========================================================
+// =========================================================
+// BUILD
+// =========================================================
 
   @override
-  Widget build(BuildContext context,) {
+  Widget build(BuildContext context) {
     final localizations =
     AppLocalizations.of(context)!;
 
     return MultiBlocProvider(
       providers: [
-        // =====================================================
-        // LOCATION
-        // =====================================================
+// =====================================================
+// LOCATION
+// =====================================================
 
-        BlocProvider<
-            LocationViewModel>.value(
+        BlocProvider<LocationViewModel>.value(
           value: _locationViewModel,
         ),
 
-        // =====================================================
-        // PRAYER TIMES
-        // =====================================================
+// =====================================================
+// PRAYER TIMES
+// =====================================================
 
         BlocProvider<
-            prayer_view_model
-                .PrayerTimesViewModel>(
+            prayer_view_model.PrayerTimesViewModel>(
           create: (_) =>
               getIt<
                   prayer_view_model
@@ -272,9 +268,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
             LocationStates>(
           listener: (context,
               locationState,) async {
-            // =================================================
-            // LOCATION SUCCESS
-            // =================================================
+// =================================================
+// LOCATION SUCCESS
+// =================================================
 
             if (locationState
             is LocationSuccessState) {
@@ -286,17 +282,16 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 return;
               }
 
-              // ===============================================
-              // GET TODAY PRAYER TIMES
-              // ===============================================
+// ===============================================
+// GET TODAY PRAYER TIMES
+// ===============================================
 
               context
                   .read<
                   prayer_view_model
                       .PrayerTimesViewModel>()
                   .getPrayerTimes(
-                date:
-                _getCurrentDate(),
+                date: _getCurrentDate(),
                 latitude:
                 location.latitude,
                 longitude:
@@ -304,9 +299,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 method: 5,
               );
 
-              // ===============================================
-              // SCHEDULE ATHAN
-              // ===============================================
+// ===============================================
+// SCHEDULE ONLY IF MASTER IS ON
+// ===============================================
 
               await _scheduleAthan(
                 latitude:
@@ -323,9 +318,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
               PrayerTimesStates>(
             builder: (context,
                 prayerState,) {
-              // =================================================
-              // NO SAVED LOCATION
-              // =================================================
+// =================================================
+// NO LOCATION
+// =================================================
 
               if (!_locationViewModel
                   .locationEntityPresent) {
@@ -345,31 +340,30 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 );
               }
 
-              // =================================================
-              // LOADING PRAYER
-              // =================================================
+// =================================================
+// LOADING
+// =================================================
 
               if (prayerState
               is PrayerTimesLoadingState) {
                 return MainLoadingWidget();
               }
 
-              // =================================================
-              // ERROR
-              // =================================================
+// =================================================
+// ERROR
+// =================================================
 
               if (prayerState
               is PrayerTimesErrorState) {
                 return MainErrorWidget(
                   errorMsg:
-                  prayerState
-                      .errorMessage,
+                  prayerState.errorMessage,
                 );
               }
 
-              // =================================================
-              // SUCCESS
-              // =================================================
+// =================================================
+// SUCCESS
+// =================================================
 
               if (prayerState
               is PrayerTimesSuccessState) {
@@ -379,10 +373,18 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
 
                 return Stack(
                   children: [
+// =========================================
+// LOCATION + DATE
+// =========================================
+
                     LocationAndDateContainer(
                       cityName:
                       location.cityName,
                     ),
+
+// =========================================
+// PRAYER LIST
+// =========================================
 
                     prayer_list
                         .PrayersListView(
@@ -407,9 +409,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 );
               }
 
-              // =================================================
-              // DEFAULT
-              // =================================================
+// =================================================
+// DEFAULT
+// =================================================
 
               return Stack(
                 children: [

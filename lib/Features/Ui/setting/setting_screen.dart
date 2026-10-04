@@ -8,6 +8,7 @@ import 'package:islamic/core/Services/notification_service.dart';
 import 'package:islamic/core/Utils/app_colors.dart';
 import 'package:islamic/core/Utils/app_images.dart';
 import 'package:islamic/core/Utils/language_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../Core/DI/injection.dart';
 import '../../../l10n/app_localizations.dart';
@@ -20,19 +21,20 @@ class SettingScreen extends StatefulWidget {
   });
 
   @override
-  State<SettingScreen> createState() => _SettingScreenState();
+  State<SettingScreen> createState() =>
+      _SettingScreenState();
 }
 
 class _SettingScreenState extends State<SettingScreen> {
-  bool athanEnabled = true;
-
-  bool dark = false;
-
-  late final LocationViewModel _locationViewModel;
+  bool athanEnabled = false;
 
   bool notificationsEnabled = false;
 
-  late final AthanScheduler _athanScheduler;
+  late final LocationViewModel
+  _locationViewModel;
+
+  late final AthanScheduler
+  _athanScheduler;
 
   final List<Map<String, String>> languages = [
     {
@@ -61,9 +63,11 @@ class _SettingScreenState extends State<SettingScreen> {
   void initState() {
     super.initState();
 
-    _athanScheduler = getIt<AthanScheduler>();
+    _athanScheduler =
+        getIt<AthanScheduler>();
 
-    _locationViewModel = getIt<LocationViewModel>();
+    _locationViewModel =
+        getIt<LocationViewModel>();
 
     _initializeSettings();
   }
@@ -73,7 +77,8 @@ class _SettingScreenState extends State<SettingScreen> {
 // =========================================================
 
   Future<void> _initializeSettings() async {
-    await _athanScheduler.initializeAthanMasterState();
+    await _athanScheduler
+        .initializeAthanMasterState();
 
     await _loadAthanState();
 
@@ -81,11 +86,13 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 
 // =========================================================
-// LOAD ATHAN MASTER STATE
+// LOAD MASTER ATHAN STATE
 // =========================================================
 
   Future<void> _loadAthanState() async {
-    final enabled = await _athanScheduler.isAthanEnabled();
+    final enabled =
+    await _athanScheduler
+        .isAthanEnabled();
 
     if (!mounted) return;
 
@@ -95,22 +102,80 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 
 // =========================================================
-// TOGGLE MASTER ATHAN
+// TURN MASTER ATHAN ON/OFF
 // =========================================================
 
   Future<void> _toggleMasterAthan(bool value,
       StateSetter setDialogState,) async {
-    await _athanScheduler.setAthanEnabled(value);
+    final prefs =
+    await SharedPreferences
+        .getInstance();
+
+// =======================================================
+// MASTER OFF
+// =======================================================
+
+    if (!value) {
+      await _athanScheduler
+          .setAthanEnabled(false);
+
+      await _athanScheduler
+          .cancelAll();
+
+      const prayerIds = [
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+      ];
+
+      for (final id in prayerIds) {
+        await prefs.setBool(
+          'azan_enabled_$id',
+          false,
+        );
+      }
+
+      if (!mounted) return;
+
+      setDialogState(() {
+        athanEnabled = false;
+      });
+
+      setState(() {
+        athanEnabled = false;
+      });
+
+      debugPrint(
+        'MASTER ATHAN OFF => '
+            'ALL PRAYERS OFF',
+      );
+
+      return;
+    }
+
+// =======================================================
+// MASTER ON
+// =======================================================
+
+    await _athanScheduler
+        .setAthanEnabled(true);
 
     if (!mounted) return;
 
     setDialogState(() {
-      athanEnabled = value;
+      athanEnabled = true;
     });
 
     setState(() {
-      athanEnabled = value;
+      athanEnabled = true;
     });
+
+    debugPrint(
+      'MASTER ATHAN ON => '
+          'USER CAN CHOOSE PRAYERS',
+    );
   }
 
 // =========================================================
@@ -119,7 +184,8 @@ class _SettingScreenState extends State<SettingScreen> {
 
   Future<void> _loadNotificationState() async {
     final enabled =
-    await NotificationService.areNotificationsEnabled();
+    await NotificationService
+        .areNotificationsEnabled();
 
     if (!mounted) return;
 
@@ -134,75 +200,108 @@ class _SettingScreenState extends State<SettingScreen> {
 
   String _getCurrentLanguageName() {
     final currentCode =
-        LanguageManager.currentLanguageCode;
+        LanguageManager
+            .currentLanguageCode;
 
-    final language = languages.firstWhere(
-          (language) => language["code"] == currentCode,
-      orElse: () => languages.first,
+    final language =
+    languages.firstWhere(
+          (language) =>
+      language["code"] ==
+          currentCode,
+      orElse: () =>
+      languages.first,
     );
 
     return language["name"]!;
   }
 
-  Future<void> _showLanguageDialog() async {
+  Future<void>
+  _showLanguageDialog() async {
     final currentCode =
-        LanguageManager.currentLanguageCode;
+        LanguageManager
+            .currentLanguageCode;
 
     await showDialog(
       context: context,
       builder: (context) {
-        final l10n = AppLocalizations.of(context)!;
+        final l10n =
+        AppLocalizations.of(context)!;
 
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+          shape:
+          RoundedRectangleBorder(
+            borderRadius:
+            BorderRadius.circular(20),
           ),
           title: Text(
             l10n.chooseLanguage,
-            textAlign: TextAlign.right,
-            style: const TextStyle(
+            textAlign:
+            TextAlign.right,
+            style:
+            const TextStyle(
               fontFamily: "Cairo",
             ),
           ),
           content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: languages.map((language) {
-              final code = language["code"]!;
-              final name = language["name"]!;
+            mainAxisSize:
+            MainAxisSize.min,
+            children:
+            languages.map(
+                  (language) {
+                final code =
+                language["code"]!;
+                final name =
+                language["name"]!;
 
-              final isSelected = currentCode == code;
+                final isSelected =
+                    currentCode == code;
 
-              return ListTile(
-                onTap: () async {
-                  await LanguageManager.changeLanguage(code);
+                return ListTile(
+                  onTap: () async {
+                    await LanguageManager
+                        .changeLanguage(
+                      code,
+                    );
 
-                  if (!mounted) return;
+                    if (!mounted) return;
 
-                  Navigator.of(context).pop();
+                    Navigator.of(
+                      context,
+                    ).pop();
 
-                  setState(() {});
-                },
-                title: Text(
-                  name,
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    fontFamily: "Cairo",
-                    fontSize: 16,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
+                    setState(() {});
+                  },
+                  title: Text(
+                    name,
+                    textAlign:
+                    TextAlign.right,
+                    style: TextStyle(
+                      fontFamily:
+                      "Cairo",
+                      fontSize: 16,
+                      fontWeight:
+                      isSelected
+                          ? FontWeight
+                          .bold
+                          : FontWeight
+                          .normal,
+                    ),
                   ),
-                ),
-                trailing: isSelected
-                    ? Icon(
-                  Icons.check_circle,
-                  color: AppColors.DarkGreenColor,
-                )
-                    : const Icon(
-                  Icons.radio_button_unchecked,
-                ),
-              );
-            }).toList(),
+                  trailing:
+                  isSelected
+                      ? Icon(
+                    Icons
+                        .check_circle,
+                    color: AppColors
+                        .DarkGreenColor,
+                  )
+                      : const Icon(
+                    Icons
+                        .radio_button_unchecked,
+                  ),
+                );
+              },
+            ).toList(),
           ),
         );
       },
@@ -213,64 +312,90 @@ class _SettingScreenState extends State<SettingScreen> {
 // LOCATION PERMISSION
 // =========================================================
 
-  Future<void> _requestLocationPermission() async {
-    final l10n = AppLocalizations.of(context)!;
+  Future<void>
+  _requestLocationPermission() async {
+    final l10n =
+    AppLocalizations.of(context)!;
 
     LocationPermission permission =
-    await Geolocator.checkPermission();
+    await Geolocator
+        .checkPermission();
 
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
+    if (permission ==
+        LocationPermission.denied) {
+      permission =
+      await Geolocator
+          .requestPermission();
     }
 
-    if (permission == LocationPermission.deniedForever) {
+    if (permission ==
+        LocationPermission.deniedForever) {
       if (!mounted) return;
 
       await showDialog(
         context: context,
         builder: (dialogContext) {
           return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+            shape:
+            RoundedRectangleBorder(
+              borderRadius:
+              BorderRadius.circular(
+                20,
+              ),
             ),
             title: Text(
-              l10n.locationPermissionRequired,
-              textAlign: TextAlign.right,
-              style: const TextStyle(
+              l10n
+                  .locationPermissionRequired,
+              textAlign:
+              TextAlign.right,
+              style:
+              const TextStyle(
                 fontFamily: "Cairo",
               ),
             ),
             content: Text(
-              l10n.locationPermissionSettingsMessage,
-              textAlign: TextAlign.right,
-              style: const TextStyle(
+              l10n
+                  .locationPermissionSettingsMessage,
+              textAlign:
+              TextAlign.right,
+              style:
+              const TextStyle(
                 fontFamily: "Cairo",
               ),
             ),
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.of(dialogContext).pop();
+                  Navigator.of(
+                    dialogContext,
+                  ).pop();
                 },
                 child: Text(
                   l10n.cancel,
                   style: TextStyle(
-                    color: AppColors.GreyColor,
-                    fontFamily: "Cairo",
+                    color:
+                    AppColors.GreyColor,
+                    fontFamily:
+                    "Cairo",
                   ),
                 ),
               ),
               TextButton(
                 onPressed: () async {
-                  Navigator.of(dialogContext).pop();
+                  Navigator.of(
+                    dialogContext,
+                  ).pop();
 
-                  await Geolocator.openAppSettings();
+                  await Geolocator
+                      .openAppSettings();
                 },
                 child: Text(
                   l10n.openSettings,
                   style: TextStyle(
-                    color: AppColors.DarkGreenColor,
-                    fontFamily: "Cairo",
+                    color: AppColors
+                        .DarkGreenColor,
+                    fontFamily:
+                    "Cairo",
                   ),
                 ),
               ),
@@ -282,16 +407,22 @@ class _SettingScreenState extends State<SettingScreen> {
       return;
     }
 
-    if (permission != LocationPermission.always &&
-        permission != LocationPermission.whileInUse) {
+    if (permission !=
+        LocationPermission.always &&
+        permission !=
+            LocationPermission.whileInUse) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
         SnackBar(
           content: Text(
-            l10n.locationPermissionDenied,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
+            l10n
+                .locationPermissionDenied,
+            textAlign:
+            TextAlign.center,
+            style:
+            const TextStyle(
               fontFamily: "Cairo",
             ),
           ),
@@ -301,47 +432,67 @@ class _SettingScreenState extends State<SettingScreen> {
       return;
     }
 
-    await _locationViewModel.getCurrentLocation();
+    await _locationViewModel
+        .getCurrentLocation();
   }
 
 // =========================================================
-// ABOUT APP DIALOG
+// ABOUT APP
 // =========================================================
 
-  Future<void> _showAboutDialog() async {
-    final l10n = AppLocalizations.of(context)!;
+  Future<void>
+  _showAboutDialog() async {
+    final l10n =
+    AppLocalizations.of(context)!;
 
     await showDialog(
       context: context,
       barrierDismissible: true,
       builder: (dialogContext) {
         return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: EdgeInsets.symmetric(
+          backgroundColor:
+          Colors.transparent,
+          insetPadding:
+          EdgeInsets.symmetric(
             horizontal: 28.w,
           ),
           child: Container(
             width: double.infinity,
-            padding: EdgeInsets.all(24.w),
+            padding:
+            EdgeInsets.all(24.w),
             decoration: BoxDecoration(
-              color: AppColors.whiteColor,
-              borderRadius: BorderRadius.circular(28),
+              color:
+              AppColors.whiteColor,
+              borderRadius:
+              BorderRadius.circular(
+                28,
+              ),
             ),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize:
+              MainAxisSize.min,
               children: [
                 Container(
                   width: 72.w,
                   height: 72.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.DarkGreenColor,
-                    borderRadius: BorderRadius.circular(24),
+                  decoration:
+                  BoxDecoration(
+                    color: AppColors
+                        .DarkGreenColor,
+                    borderRadius:
+                    BorderRadius.circular(
+                      24,
+                    ),
                   ),
                   child: Padding(
-                    padding: EdgeInsets.all(14.w),
+                    padding:
+                    EdgeInsets.all(
+                      14.w,
+                    ),
                     child: Image(
                       image: AssetImage(
-                        AppImages.isalmicIcon,
+                        AppImages
+                            .isalmicIcon,
                       ),
                     ),
                   ),
@@ -351,11 +502,14 @@ class _SettingScreenState extends State<SettingScreen> {
 
                 Text(
                   l10n.aboutAppTitle,
-                  textAlign: TextAlign.center,
+                  textAlign:
+                  TextAlign.center,
                   style: TextStyle(
                     fontSize: 22,
-                    color: AppColors.DarkGreenColor,
-                    fontWeight: FontWeight.w600,
+                    color: AppColors
+                        .DarkGreenColor,
+                    fontWeight:
+                    FontWeight.w600,
                     fontFamily: "Cairo",
                   ),
                 ),
@@ -365,22 +519,31 @@ class _SettingScreenState extends State<SettingScreen> {
                 Container(
                   width: 60.w,
                   height: 2.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.DarkYellowColor,
-                    borderRadius: BorderRadius.circular(10),
+                  decoration:
+                  BoxDecoration(
+                    color: AppColors
+                        .DarkYellowColor,
+                    borderRadius:
+                    BorderRadius.circular(
+                      10,
+                    ),
                   ),
                 ),
 
                 SizedBox(height: 18.h),
 
                 Text(
-                  l10n.aboutAppDescription1,
-                  textAlign: TextAlign.center,
+                  l10n
+                      .aboutAppDescription1,
+                  textAlign:
+                  TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.9,
-                    color: AppColors.BlackColor,
-                    fontWeight: FontWeight.w400,
+                    color: AppColors
+                        .BlackColor,
+                    fontWeight:
+                    FontWeight.w400,
                     fontFamily: "Cairo",
                   ),
                 ),
@@ -388,13 +551,17 @@ class _SettingScreenState extends State<SettingScreen> {
                 SizedBox(height: 14.h),
 
                 Text(
-                  l10n.aboutAppDescription2,
-                  textAlign: TextAlign.center,
+                  l10n
+                      .aboutAppDescription2,
+                  textAlign:
+                  TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.8,
-                    color: AppColors.GreyColor,
-                    fontWeight: FontWeight.w400,
+                    color: AppColors
+                        .GreyColor,
+                    fontWeight:
+                    FontWeight.w400,
                     fontFamily: "Cairo",
                   ),
                 ),
@@ -402,19 +569,26 @@ class _SettingScreenState extends State<SettingScreen> {
                 SizedBox(height: 22.h),
 
                 Container(
-                  padding: EdgeInsets.symmetric(
+                  padding:
+                  EdgeInsets.symmetric(
                     horizontal: 18.w,
                     vertical: 8.h,
                   ),
-                  decoration: BoxDecoration(
-                    color: AppColors.semiwhiteColor,
-                    borderRadius: BorderRadius.circular(14),
+                  decoration:
+                  BoxDecoration(
+                    color: AppColors
+                        .semiwhiteColor,
+                    borderRadius:
+                    BorderRadius.circular(
+                      14,
+                    ),
                   ),
                   child: Text(
                     l10n.appVersion,
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.GreyColor,
+                      color: AppColors
+                          .GreyColor,
                       fontFamily: "Cairo",
                     ),
                   ),
@@ -425,25 +599,39 @@ class _SettingScreenState extends State<SettingScreen> {
                 SizedBox(
                   width: double.infinity,
                   height: 48.h,
-                  child: ElevatedButton(
+                  child:
+                  ElevatedButton(
                     onPressed: () {
-                      Navigator.of(dialogContext).pop();
+                      Navigator.of(
+                        dialogContext,
+                      ).pop();
                     },
-                    style: ElevatedButton.styleFrom(
+                    style:
+                    ElevatedButton
+                        .styleFrom(
                       backgroundColor:
-                      AppColors.DarkGreenColor,
+                      AppColors
+                          .DarkGreenColor,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                      shape:
+                      RoundedRectangleBorder(
+                        borderRadius:
+                        BorderRadius
+                            .circular(
+                          16,
+                        ),
                       ),
                     ),
                     child: Text(
                       l10n.ok,
                       style: TextStyle(
                         fontSize: 15,
-                        color: AppColors.whiteColor,
-                        fontFamily: "Cairo",
-                        fontWeight: FontWeight.w500,
+                        color: AppColors
+                            .whiteColor,
+                        fontFamily:
+                        "Cairo",
+                        fontWeight:
+                        FontWeight.w500,
                       ),
                     ),
                   ),
@@ -460,7 +648,8 @@ class _SettingScreenState extends State<SettingScreen> {
 // NOTIFICATIONS DIALOG
 // =========================================================
 
-  Future<void> _showNotificationsDialog() async {
+  Future<void>
+  _showNotificationsDialog() async {
     await _loadNotificationState();
     await _loadAthanState();
 
@@ -474,54 +663,67 @@ class _SettingScreenState extends State<SettingScreen> {
           builder: (context,
               setDialogState,) {
             final l10n =
-            AppLocalizations.of(context)!;
+            AppLocalizations.of(
+              context,
+            )!;
 
             return Dialog(
-              backgroundColor: Colors.transparent,
-              insetPadding: EdgeInsets.symmetric(
+              backgroundColor:
+              Colors.transparent,
+              insetPadding:
+              EdgeInsets.symmetric(
                 horizontal: 28.w,
               ),
               child: Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(22.w),
-                decoration: BoxDecoration(
-                  color: AppColors.whiteColor,
-                  borderRadius: BorderRadius.circular(28),
+                padding:
+                EdgeInsets.all(22.w),
+                decoration:
+                BoxDecoration(
+                  color:
+                  AppColors.whiteColor,
+                  borderRadius:
+                  BorderRadius.circular(
+                    28,
+                  ),
                 ),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize:
+                  MainAxisSize.min,
                   children: [
-// =====================================
-// ICON
-// =====================================
-
                     Container(
                       width: 68.w,
                       height: 68.h,
-                      decoration: BoxDecoration(
-                        color: AppColors.lightGreenColor2,
+                      decoration:
+                      BoxDecoration(
+                        color: AppColors
+                            .lightGreenColor2,
                         borderRadius:
-                        BorderRadius.circular(22),
+                        BorderRadius
+                            .circular(
+                          22,
+                        ),
                       ),
                       child: Icon(
-                        Icons.notifications_active_outlined,
+                        Icons
+                            .notifications_active_outlined,
                         size: 34,
-                        color: AppColors.DarkGreenColor,
+                        color: AppColors
+                            .DarkGreenColor,
                       ),
                     ),
 
                     SizedBox(height: 14.h),
 
-// =====================================
-// TITLE
-// =====================================
-
                     Text(
-                      l10n.notificationsDialogTitle,
+                      l10n
+                          .notificationsDialogTitle,
                       style: TextStyle(
                         fontSize: 21,
-                        color: AppColors.DarkGreenColor,
-                        fontWeight: FontWeight.w600,
+                        color: AppColors
+                            .DarkGreenColor,
+                        fontWeight:
+                        FontWeight.w600,
                         fontFamily: "Cairo",
                       ),
                     ),
@@ -529,44 +731,58 @@ class _SettingScreenState extends State<SettingScreen> {
                     SizedBox(height: 10.h),
 
                     Text(
-                      l10n.notificationsDialogDescription,
-                      textAlign: TextAlign.center,
+                      l10n
+                          .notificationsDialogDescription,
+                      textAlign:
+                      TextAlign.center,
                       style: TextStyle(
                         fontSize: 13,
                         height: 1.7,
-                        color: AppColors.GreyColor,
+                        color: AppColors
+                            .GreyColor,
                         fontFamily: "Cairo",
                       ),
                     ),
 
                     SizedBox(height: 20.h),
 
-// =====================================
+// =================================================
 // SYSTEM NOTIFICATIONS
-// =====================================
+// =================================================
 
                     Container(
                       width: double.infinity,
-                      padding: EdgeInsets.symmetric(
+                      padding:
+                      EdgeInsets.symmetric(
                         horizontal: 14.w,
                         vertical: 12.h,
                       ),
-                      decoration: BoxDecoration(
-                        color: AppColors.semiwhiteColor,
+                      decoration:
+                      BoxDecoration(
+                        color: AppColors
+                            .semiwhiteColor,
                         borderRadius:
-                        BorderRadius.circular(18),
+                        BorderRadius
+                            .circular(
+                          18,
+                        ),
                       ),
                       child: Row(
                         children: [
                           Switch(
-                            value: notificationsEnabled,
+                            value:
+                            notificationsEnabled,
                             activeTrackColor:
-                            AppColors.DarkGreenColor,
+                            AppColors
+                                .DarkGreenColor,
                             activeColor:
-                            AppColors.whiteColor,
+                            AppColors
+                                .whiteColor,
                             inactiveThumbColor:
-                            AppColors.GreyColor,
-                            onChanged: (value) async {
+                            AppColors
+                                .GreyColor,
+                            onChanged:
+                                (value) async {
                               if (value) {
                                 final result =
                                 await NotificationService
@@ -576,15 +792,19 @@ class _SettingScreenState extends State<SettingScreen> {
                                   return;
                                 }
 
-                                setDialogState(() {
-                                  notificationsEnabled =
-                                      result;
-                                });
+                                setDialogState(
+                                      () {
+                                    notificationsEnabled =
+                                        result;
+                                  },
+                                );
 
-                                setState(() {
-                                  notificationsEnabled =
-                                      result;
-                                });
+                                setState(
+                                      () {
+                                    notificationsEnabled =
+                                        result;
+                                  },
+                                );
                               } else {
                                 await _athanScheduler
                                     .cancelAll();
@@ -593,15 +813,19 @@ class _SettingScreenState extends State<SettingScreen> {
                                   return;
                                 }
 
-                                setDialogState(() {
-                                  notificationsEnabled =
-                                  false;
-                                });
+                                setDialogState(
+                                      () {
+                                    notificationsEnabled =
+                                    false;
+                                  },
+                                );
 
-                                setState(() {
-                                  notificationsEnabled =
-                                  false;
-                                });
+                                setState(
+                                      () {
+                                    notificationsEnabled =
+                                    false;
+                                  },
+                                );
                               }
                             },
                           ),
@@ -610,53 +834,72 @@ class _SettingScreenState extends State<SettingScreen> {
 
                           Column(
                             crossAxisAlignment:
-                            CrossAxisAlignment.end,
+                            CrossAxisAlignment
+                                .end,
                             children: [
                               Text(
-                                l10n.appNotifications,
-                                style: TextStyle(
+                                l10n
+                                    .appNotifications,
+                                style:
+                                TextStyle(
                                   fontSize: 15,
-                                  color:
-                                  AppColors.BlackColor,
+                                  color: AppColors
+                                      .BlackColor,
                                   fontWeight:
-                                  FontWeight.w500,
-                                  fontFamily: "Cairo",
+                                  FontWeight
+                                      .w500,
+                                  fontFamily:
+                                  "Cairo",
                                 ),
                               ),
 
-                              SizedBox(height: 3.h),
+                              SizedBox(
+                                height: 3.h,
+                              ),
 
                               Text(
                                 notificationsEnabled
-                                    ? l10n.notificationsEnabled
-                                    : l10n.notificationsDisabled,
-                                style: TextStyle(
+                                    ? l10n
+                                    .notificationsEnabled
+                                    : l10n
+                                    .notificationsDisabled,
+                                style:
+                                TextStyle(
                                   fontSize: 11,
-                                  color:
-                                  AppColors.GreyColor,
-                                  fontFamily: "Cairo",
+                                  color: AppColors
+                                      .GreyColor,
+                                  fontFamily:
+                                  "Cairo",
                                 ),
                               ),
                             ],
                           ),
 
-                          SizedBox(width: 12.w),
+                          SizedBox(
+                            width: 12.w,
+                          ),
 
                           Container(
                             width: 42.w,
                             height: 42.h,
-                            decoration: BoxDecoration(
-                              color:
-                              AppColors.whiteColor,
+                            decoration:
+                            BoxDecoration(
+                              color: AppColors
+                                  .whiteColor,
                               borderRadius:
-                              BorderRadius.circular(14),
+                              BorderRadius
+                                  .circular(
+                                14,
+                              ),
                             ),
                             child: Icon(
                               notificationsEnabled
-                                  ? Icons.notifications_active
-                                  : Icons.notifications_off_outlined,
-                              color:
-                              AppColors.DarkGreenColor,
+                                  ? Icons
+                                  .notifications_active
+                                  : Icons
+                                  .notifications_off_outlined,
+                              color: AppColors
+                                  .DarkGreenColor,
                             ),
                           ),
                         ],
@@ -665,32 +908,43 @@ class _SettingScreenState extends State<SettingScreen> {
 
                     SizedBox(height: 14.h),
 
-// =====================================
-// MASTER ATHAN SWITCH
-// =====================================
+// =================================================
+// MASTER ATHAN
+// =================================================
 
                     Container(
                       width: double.infinity,
-                      padding: EdgeInsets.symmetric(
+                      padding:
+                      EdgeInsets.symmetric(
                         horizontal: 14.w,
                         vertical: 12.h,
                       ),
-                      decoration: BoxDecoration(
-                        color: AppColors.semiwhiteColor,
+                      decoration:
+                      BoxDecoration(
+                        color: AppColors
+                            .semiwhiteColor,
                         borderRadius:
-                        BorderRadius.circular(18),
+                        BorderRadius
+                            .circular(
+                          18,
+                        ),
                       ),
                       child: Row(
                         children: [
                           Switch(
-                            value: athanEnabled,
+                            value:
+                            athanEnabled,
                             activeTrackColor:
-                            AppColors.DarkGreenColor,
+                            AppColors
+                                .DarkGreenColor,
                             activeColor:
-                            AppColors.whiteColor,
+                            AppColors
+                                .whiteColor,
                             inactiveThumbColor:
-                            AppColors.GreyColor,
-                            onChanged: (value) async {
+                            AppColors
+                                .GreyColor,
+                            onChanged:
+                                (value) async {
                               await _toggleMasterAthan(
                                 value,
                                 setDialogState,
@@ -702,55 +956,75 @@ class _SettingScreenState extends State<SettingScreen> {
 
                           Column(
                             crossAxisAlignment:
-                            CrossAxisAlignment.end,
+                            CrossAxisAlignment
+                                .end,
                             children: [
                               Text(
                                 athanEnabled
-                                    ? l10n.athanEnabled
-                                    : l10n.athanDisabled,
-                                style: TextStyle(
+                                    ? l10n
+                                    .athanEnabled
+                                    : l10n
+                                    .athanDisabled,
+                                style:
+                                TextStyle(
                                   fontSize: 15,
-                                  color:
-                                  AppColors.BlackColor,
+                                  color: AppColors
+                                      .BlackColor,
                                   fontWeight:
-                                  FontWeight.w500,
-                                  fontFamily: "Cairo",
+                                  FontWeight
+                                      .w500,
+                                  fontFamily:
+                                  "Cairo",
                                 ),
                               ),
 
-                              SizedBox(height: 3.h),
+                              SizedBox(
+                                height: 3.h,
+                              ),
 
                               Text(
                                 athanEnabled
-                                    ? l10n.athanNotificationsEnabled
-                                    : l10n.allAthanNotificationsDisabled,
-                                style: TextStyle(
+                                    ? l10n
+                                    .athanNotificationsEnabled
+                                    : l10n
+                                    .allAthanNotificationsDisabled,
+                                style:
+                                TextStyle(
                                   fontSize: 11,
-                                  color:
-                                  AppColors.GreyColor,
-                                  fontFamily: "Cairo",
+                                  color: AppColors
+                                      .GreyColor,
+                                  fontFamily:
+                                  "Cairo",
                                 ),
                               ),
                             ],
                           ),
 
-                          SizedBox(width: 12.w),
+                          SizedBox(
+                            width: 12.w,
+                          ),
 
                           Container(
                             width: 42.w,
                             height: 42.h,
-                            decoration: BoxDecoration(
-                              color:
-                              AppColors.whiteColor,
+                            decoration:
+                            BoxDecoration(
+                              color: AppColors
+                                  .whiteColor,
                               borderRadius:
-                              BorderRadius.circular(14),
+                              BorderRadius
+                                  .circular(
+                                14,
+                              ),
                             ),
                             child: Icon(
                               athanEnabled
-                                  ? Icons.volume_up_outlined
-                                  : Icons.volume_off_outlined,
-                              color:
-                              AppColors.DarkGreenColor,
+                                  ? Icons
+                                  .volume_up_outlined
+                                  : Icons
+                                  .volume_off_outlined,
+                              color: AppColors
+                                  .DarkGreenColor,
                             ),
                           ),
                         ],
@@ -759,59 +1033,70 @@ class _SettingScreenState extends State<SettingScreen> {
 
                     SizedBox(height: 14.h),
 
-// =====================================
+// =================================================
 // OPEN SETTINGS
-// =====================================
+// =================================================
 
                     TextButton(
                       onPressed: () async {
-                        await Geolocator.openAppSettings();
+                        await Geolocator
+                            .openAppSettings();
                       },
                       child: Text(
-                        l10n.openNotificationSettings,
+                        l10n
+                            .openNotificationSettings,
                         style: TextStyle(
-                          color:
-                          AppColors.DarkGreenColor,
+                          color: AppColors
+                              .DarkGreenColor,
                           fontSize: 13,
-                          fontFamily: "Cairo",
-                          fontWeight: FontWeight.w500,
+                          fontFamily:
+                          "Cairo",
+                          fontWeight:
+                          FontWeight.w500,
                         ),
                       ),
                     ),
 
                     SizedBox(height: 4.h),
 
-// =====================================
+// =================================================
 // CLOSE
-// =====================================
+// =================================================
 
                     SizedBox(
                       width: double.infinity,
                       height: 46.h,
-                      child: ElevatedButton(
+                      child:
+                      ElevatedButton(
                         onPressed: () {
                           Navigator.of(
                             dialogContext,
                           ).pop();
                         },
                         style:
-                        ElevatedButton.styleFrom(
+                        ElevatedButton
+                            .styleFrom(
                           backgroundColor:
-                          AppColors.DarkGreenColor,
+                          AppColors
+                              .DarkGreenColor,
                           elevation: 0,
                           shape:
                           RoundedRectangleBorder(
                             borderRadius:
-                            BorderRadius.circular(15),
+                            BorderRadius
+                                .circular(
+                              15,
+                            ),
                           ),
                         ),
                         child: Text(
                           l10n.ok,
                           style: TextStyle(
                             fontSize: 14,
-                            color:
-                            AppColors.whiteColor,
-                            fontFamily: "Cairo",
+                            color: AppColors
+                                .whiteColor,
+                            fontFamily:
+                            "Cairo",
                           ),
                         ),
                       ),
@@ -835,7 +1120,8 @@ class _SettingScreenState extends State<SettingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n =
+    AppLocalizations.of(context)!;
 
     return BlocListener<
         LocationViewModel,
@@ -843,23 +1129,29 @@ class _SettingScreenState extends State<SettingScreen> {
       bloc: _locationViewModel,
       listener: (context,
           state,) {
-        if (state is LocationSuccessState) {
+        if (state
+        is LocationSuccessState) {
           WidgetsBinding.instance
               .addPostFrameCallback(
                 (_) {
               if (!mounted) return;
 
-              if (Navigator.of(context).canPop()) {
-                Navigator.of(context).pop(true);
+              if (Navigator.of(context)
+                  .canPop()) {
+                Navigator.of(context)
+                    .pop(true);
               }
             },
           );
         }
 
-        if (state is LocationErrorState) {
-          ScaffoldMessenger.of(context).showSnackBar(
+        if (state
+        is LocationErrorState) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
             SnackBar(
-              content: Text(state.errorMsg),
+              content:
+              Text(state.errorMsg),
             ),
           );
         }
@@ -867,6 +1159,7 @@ class _SettingScreenState extends State<SettingScreen> {
       child: Scaffold(
         backgroundColor:
         AppColors.semiwhiteColor,
+
         body: Column(
           children: [
 // =================================================
@@ -876,16 +1169,20 @@ class _SettingScreenState extends State<SettingScreen> {
             Container(
               width: 430.w,
               height: 110.h,
-              decoration: BoxDecoration(
-                image: DecorationImage(
+              decoration:
+              BoxDecoration(
+                image:
+                DecorationImage(
                   image: AssetImage(
-                    AppImages.GreenContainerBackground,
+                    AppImages
+                        .GreenContainerBackground,
                   ),
                   fit: BoxFit.fill,
                 ),
               ),
               child: Padding(
-                padding: EdgeInsets.symmetric(
+                padding:
+                EdgeInsets.symmetric(
                   vertical: 20.h,
                   horizontal: 24.w,
                 ),
@@ -899,39 +1196,53 @@ class _SettingScreenState extends State<SettingScreen> {
                           l10n.settings,
                           style: TextStyle(
                             fontSize: 24,
-                            color:
-                            AppColors.whiteColor,
+                            color: AppColors
+                                .whiteColor,
                             fontWeight:
-                            FontWeight.w500,
-                            fontFamily: "Cairo",
+                            FontWeight
+                                .w500,
+                            fontFamily:
+                            "Cairo",
                           ),
                         ),
-                        SizedBox(height: 5.h),
+
+                        SizedBox(
+                          height: 5.h,
+                        ),
+
                         Text(
-                          l10n.customizeExperience,
+                          l10n
+                              .customizeExperience,
                           style: TextStyle(
                             fontSize: 14,
-                            color:
-                            AppColors.whiteColor,
+                            color: AppColors
+                                .whiteColor,
                             fontWeight:
-                            FontWeight.w400,
-                            fontFamily: "Cairo",
+                            FontWeight
+                                .w400,
+                            fontFamily:
+                            "Cairo",
                           ),
                         ),
                       ],
                     ),
 
-                    SizedBox(width: 16.w),
+                    SizedBox(
+                      width: 16.w,
+                    ),
 
                     InkWell(
                       onTap: () {
-                        Navigator.of(context).pop();
+                        Navigator.of(
+                          context,
+                        ).pop();
                       },
                       child: Icon(
-                        Icons.arrow_forward_outlined,
+                        Icons
+                            .arrow_forward_outlined,
                         size: 18,
-                        color:
-                        AppColors.whiteColor,
+                        color: AppColors
+                            .whiteColor,
                       ),
                     ),
                   ],
@@ -945,102 +1256,94 @@ class _SettingScreenState extends State<SettingScreen> {
 
             Expanded(
               child: Padding(
-                padding: EdgeInsets.symmetric(
+                padding:
+                EdgeInsets.symmetric(
                   horizontal: 20.w,
                   vertical: 5.h,
                 ),
-                child: SingleChildScrollView(
+                child:
+                SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment:
-                    CrossAxisAlignment.end,
+                    CrossAxisAlignment
+                        .end,
                     children: [
                       Text(
-                        l10n.generalSettings,
+                        l10n
+                            .generalSettings,
                         style: TextStyle(
                           fontSize: 12,
-                          color:
-                          AppColors.GreyColor,
+                          color: AppColors
+                              .GreyColor,
                           fontWeight:
-                          FontWeight.w500,
-                          fontFamily: "Cairo",
+                          FontWeight
+                              .w500,
+                          fontFamily:
+                          "Cairo",
                         ),
                       ),
 
-                      SizedBox(height: 20.h),
+                      SizedBox(
+                        height: 20.h,
+                      ),
+
+// =======================================
+// GENERAL SETTINGS
+// =======================================
 
                       Container(
-                        height: 390.h,
+                        height: 292.5.h,
                         width: 390.w,
                         clipBehavior:
                         Clip.antiAlias,
                         decoration:
                         BoxDecoration(
-                          color:
-                          AppColors.whiteColor,
+                          color: AppColors
+                              .whiteColor,
                           borderRadius:
-                          BorderRadius.circular(
+                          BorderRadius
+                              .circular(
                             20,
                           ),
                         ),
                         child: Column(
                           children: [
-                            Expanded(
-                              child: SettingOption(
-                                buttonOrRow: Switch(
-                                  value: dark,
-                                  activeTrackColor:
-                                  AppColors
-                                      .DarkGreenColor,
-                                  activeColor:
-                                  AppColors
-                                      .whiteColor,
-                                  inactiveThumbColor:
-                                  AppColors
-                                      .GreyColor,
-                                  onChanged:
-                                      (bool value) {
-                                    setState(() {
-                                      dark = value;
-                                    });
-                                  },
-                                ),
-                                title:
-                                l10n.darkMode,
-                                subTitle:
-                                l10n
-                                    .darkModeDescription,
-                                SettingImage:
-                                AppImages
-                                    .themeIcon2,
-                              ),
-                            ),
+// =================================
+// LANGUAGE
+// =================================
 
                             Expanded(
-                              child: InkWell(
+                              child:
+                              InkWell(
                                 onTap:
                                 _showLanguageDialog,
-                                child: SettingOption(
-                                  buttonOrRow: Row(
+                                child:
+                                SettingOption(
+                                  buttonOrRow:
+                                  Row(
                                     children: [
                                       const Icon(
                                         Icons
                                             .arrow_back_ios_new,
-                                        size: 14,
+                                        size:
+                                        14,
                                         color:
-                                        AppColors
-                                            .GreyColor,
+                                        AppColors.GreyColor,
                                       ),
+
                                       SizedBox(
-                                        width: 12.w,
+                                        width:
+                                        12.w,
                                       ),
+
                                       Text(
                                         _getCurrentLanguageName(),
                                         style:
                                         TextStyle(
-                                          fontSize: 14,
+                                          fontSize:
+                                          14,
                                           color:
-                                          AppColors
-                                              .GreyColor,
+                                          AppColors.GreyColor,
                                           fontFamily:
                                           "Cairo",
                                         ),
@@ -1050,63 +1353,69 @@ class _SettingScreenState extends State<SettingScreen> {
                                   title:
                                   l10n.language,
                                   subTitle:
-                                  l10n
-                                      .languageDescription,
+                                  l10n.languageDescription,
                                   SettingImage:
-                                  AppImages
-                                      .language2Icon2,
+                                  AppImages.language2Icon2,
                                 ),
                               ),
                             ),
 
+// =================================
+// LOCATION
+// =================================
+
                             Expanded(
-                              child: InkWell(
+                              child:
+                              InkWell(
                                 onTap:
                                 _requestLocationPermission,
-                                child: SettingOption(
+                                child:
+                                SettingOption(
                                   buttonOrRow:
                                   const Icon(
                                     Icons
                                         .arrow_back_ios_new,
-                                    size: 14,
+                                    size:
+                                    14,
                                     color:
-                                    AppColors
-                                        .GreyColor,
+                                    AppColors.GreyColor,
                                   ),
                                   title:
                                   l10n.location,
                                   subTitle:
-                                  l10n
-                                      .locationDescription,
+                                  l10n.locationDescription,
                                   SettingImage:
-                                  AppImages
-                                      .LocationIcon,
+                                  AppImages.LocationIcon,
                                 ),
                               ),
                             ),
 
+// =================================
+// NOTIFICATIONS
+// =================================
+
                             Expanded(
-                              child: InkWell(
+                              child:
+                              InkWell(
                                 onTap:
                                 _showNotificationsDialog,
-                                child: SettingOption(
+                                child:
+                                SettingOption(
                                   buttonOrRow:
                                   const Icon(
                                     Icons
                                         .arrow_back_ios_new,
-                                    size: 14,
+                                    size:
+                                    14,
                                     color:
-                                    AppColors
-                                        .GreyColor,
+                                    AppColors.GreyColor,
                                   ),
                                   title:
                                   l10n.notifications,
                                   subTitle:
-                                  l10n
-                                      .notificationsDescription,
+                                  l10n.notificationsDescription,
                                   SettingImage:
-                                  AppImages
-                                      .notficationIcon,
+                                  AppImages.notficationIcon,
                                 ),
                               ),
                             ),
@@ -1114,21 +1423,31 @@ class _SettingScreenState extends State<SettingScreen> {
                         ),
                       ),
 
-                      SizedBox(height: 12.h),
+                      SizedBox(
+                        height: 12.h,
+                      ),
+
+// =======================================
+// ABOUT
+// =======================================
 
                       Text(
                         l10n.aboutApp,
                         style: TextStyle(
                           fontSize: 12,
-                          color:
-                          AppColors.GreyColor,
+                          color: AppColors
+                              .GreyColor,
                           fontWeight:
-                          FontWeight.w500,
-                          fontFamily: "Cairo",
+                          FontWeight
+                              .w500,
+                          fontFamily:
+                          "Cairo",
                         ),
                       ),
 
-                      SizedBox(height: 12.h),
+                      SizedBox(
+                        height: 12.h,
+                      ),
 
                       Container(
                         height: 175.h,
@@ -1137,47 +1456,51 @@ class _SettingScreenState extends State<SettingScreen> {
                         Clip.antiAlias,
                         decoration:
                         BoxDecoration(
-                          color:
-                          AppColors.whiteColor,
+                          color: AppColors
+                              .whiteColor,
                           borderRadius:
-                          BorderRadius.circular(
+                          BorderRadius
+                              .circular(
                             20,
                           ),
                         ),
                         child: Column(
                           children: [
                             Expanded(
-                              child: InkWell(
+                              child:
+                              InkWell(
                                 onTap:
                                 _showAboutDialog,
-                                child: SettingOption(
+                                child:
+                                SettingOption(
                                   buttonOrRow:
                                   const Icon(
                                     Icons
                                         .arrow_back_ios_new,
-                                    size: 14,
+                                    size:
+                                    14,
                                     color:
-                                    AppColors
-                                        .GreyColor,
+                                    AppColors.GreyColor,
                                   ),
                                   title:
                                   l10n.about,
                                   subTitle:
-                                  l10n
-                                      .aboutDescription,
+                                  l10n.aboutDescription,
                                   SettingImage:
-                                  AppImages
-                                      .aboutIcon,
+                                  AppImages.aboutIcon,
                                 ),
                               ),
                             ),
 
                             Expanded(
-                              child: SettingOption(
+                              child:
+                              SettingOption(
                                 buttonOrRow:
                                 Container(
-                                  width: 53.63.w,
-                                  height: 28.h,
+                                  width:
+                                  53.63.w,
+                                  height:
+                                  28.h,
                                   decoration:
                                   BoxDecoration(
                                     color: AppColors
@@ -1188,14 +1511,17 @@ class _SettingScreenState extends State<SettingScreen> {
                                       16,
                                     ),
                                   ),
-                                  child: Center(
-                                    child: Text(
+                                  child:
+                                  Center(
+                                    child:
+                                    Text(
                                       "1.0.0",
                                       style:
                                       TextStyle(
-                                        fontSize: 14,
-                                        color: AppColors
-                                            .GreyColor,
+                                        fontSize:
+                                        14,
+                                        color:
+                                        AppColors.GreyColor,
                                         fontFamily:
                                         "Cairo",
                                       ),
@@ -1205,26 +1531,32 @@ class _SettingScreenState extends State<SettingScreen> {
                                 title:
                                 l10n.version,
                                 subTitle:
-                                l10n
-                                    .currentAppVersion,
+                                l10n.currentAppVersion,
                                 SettingImage:
-                                AppImages
-                                    .aboutIcon,
+                                AppImages.aboutIcon,
                               ),
                             ),
                           ],
                         ),
                       ),
 
-                      SizedBox(height: 20.h),
+                      SizedBox(
+                        height: 20.h,
+                      ),
+
+// =======================================
+// FOOTER
+// =======================================
 
                       Container(
-                        width: double.infinity,
-                        color:
-                        AppColors.transparent,
+                        width:
+                        double.infinity,
+                        color: AppColors
+                            .transparent,
                         child: Column(
                           mainAxisAlignment:
-                          MainAxisAlignment.center,
+                          MainAxisAlignment
+                              .center,
                           children: [
                             Image(
                               image: AssetImage(
@@ -1233,31 +1565,39 @@ class _SettingScreenState extends State<SettingScreen> {
                               ),
                             ),
 
-                            SizedBox(height: 8.h),
+                            SizedBox(
+                              height: 8.h,
+                            ),
 
                             Text(
                               l10n.mushaf,
-                              style: TextStyle(
+                              style:
+                              TextStyle(
                                 fontSize: 14,
                                 color: AppColors
                                     .GreyColor,
                                 fontWeight:
-                                FontWeight.w500,
+                                FontWeight
+                                    .w500,
                                 fontFamily:
                                 "Cairo",
                               ),
                             ),
 
-                            SizedBox(height: 4.h),
+                            SizedBox(
+                              height: 4.h,
+                            ),
 
                             Text(
                               l10n.madeWithLove,
-                              style: TextStyle(
+                              style:
+                              TextStyle(
                                 fontSize: 12,
                                 color: AppColors
                                     .GreyColor,
                                 fontWeight:
-                                FontWeight.w500,
+                                FontWeight
+                                    .w500,
                                 fontFamily:
                                 "Cairo",
                               ),

@@ -5,23 +5,16 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
-import android.content.pm.ServiceInfo
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.IBinder
-import android.util.Log
+import androidx.core.app.NotificationCompat
 
 class AthanService : Service() {
 
     companion object {
-
-        private const val TAG = "AthanService"
-
-        private const val CHANNEL_ID =
-            "athan_playback_channel"
-
-        private const val NOTIFICATION_ID = 2001
 
         const val ACTION_START =
             "com.example.islamic.ACTION_START_ATHAN"
@@ -40,25 +33,38 @@ class AthanService : Service() {
 
         const val EXTRA_PRAYER_KEY =
             "prayer_key"
+
+        private const val CHANNEL_ID =
+            "athan_playback_channel"
+
+        private const val CHANNEL_NAME =
+            "Athan"
+
+        private const val NOTIFICATION_ID =
+            2001
     }
 
     private var mediaPlayer: MediaPlayer? = null
 
-    private var currentAthanId: Int = 0
+    private var currentAthanId = 0
 
-    private var currentPrayerName: String = ""
+    private var currentPrayerName = ""
 
-    private var currentPrayerKey: String = ""
+    private var currentPrayerKey = ""
+
+    // =========================================================
+    // ON CREATE
+    // =========================================================
 
     override fun onCreate() {
         super.onCreate()
 
-        Log.d(TAG, "================================")
-        Log.d(TAG, "ATHAN SERVICE CREATED")
-        Log.d(TAG, "================================")
-
         createNotificationChannel()
     }
+
+    // =========================================================
+    // ON START COMMAND
+    // =========================================================
 
     override fun onStartCommand(
         intent: Intent?,
@@ -66,11 +72,7 @@ class AthanService : Service() {
         startId: Int
     ): Int {
 
-        if (intent == null) {
-            return START_NOT_STICKY
-        }
-
-        when (intent.action) {
+        when (intent?.action) {
 
             ACTION_START -> {
 
@@ -90,23 +92,10 @@ class AthanService : Service() {
                         EXTRA_PRAYER_KEY
                     ) ?: ""
 
-                Log.d(TAG, "START ATHAN")
-                Log.d(TAG, "ID: $currentAthanId")
-                Log.d(TAG, "Prayer: $currentPrayerName")
-                Log.d(TAG, "Prayer Key: $currentPrayerKey")
-
-                startForegroundWithNotification()
-
-                playAthan()
+                startAthan()
             }
 
             ACTION_STOP -> {
-
-                Log.d(
-                    TAG,
-                    "STOP ATHAN REQUESTED"
-                )
-
                 stopAthan()
             }
         }
@@ -115,10 +104,65 @@ class AthanService : Service() {
     }
 
     // =========================================================
-    // START FOREGROUND SERVICE
+    // START ATHAN
     // =========================================================
 
-    private fun startForegroundWithNotification() {
+    private fun startAthan() {
+
+        // Stop any previous athan
+        stopMediaPlayer()
+
+        // Start foreground service
+        startForeground(
+            NOTIFICATION_ID,
+            createNotification()
+        )
+
+        // =====================================================
+        // PLAY AZAN
+        // =====================================================
+
+        try {
+
+            mediaPlayer =
+                MediaPlayer.create(
+                    this,
+                    R.raw.azan
+                )
+
+            if (mediaPlayer == null) {
+
+                sendAthanFinished()
+
+                stopAthan()
+
+                return
+            }
+
+            mediaPlayer?.setOnCompletionListener {
+
+                sendAthanFinished()
+
+                stopAthan()
+            }
+
+            mediaPlayer?.start()
+
+        } catch (e: Exception) {
+
+            e.printStackTrace()
+
+            sendAthanFinished()
+
+            stopAthan()
+        }
+    }
+
+    // =========================================================
+    // CREATE NOTIFICATION
+    // =========================================================
+
+    private fun createNotification(): Notification {
 
         val activityIntent =
             Intent(
@@ -141,13 +185,12 @@ class AthanService : Service() {
             currentPrayerKey
         )
 
-        activityIntent.addFlags(
+        activityIntent.flags =
             Intent.FLAG_ACTIVITY_NEW_TASK or
                     Intent.FLAG_ACTIVITY_CLEAR_TOP or
                     Intent.FLAG_ACTIVITY_SINGLE_TOP
-        )
 
-        val fullScreenPendingIntent =
+        val activityPendingIntent =
             PendingIntent.getActivity(
                 this,
                 currentAthanId,
@@ -156,293 +199,38 @@ class AthanService : Service() {
                         PendingIntent.FLAG_IMMUTABLE
             )
 
-        val notificationManager =
-            getSystemService(
-                NotificationManager::class.java
-            )
-
-        /*
-         * Android 14+:
-         *
-         * Full Screen Intent permission can be disabled
-         * by the user/system.
-         *
-         * We check it here before attaching the
-         * Full Screen Intent.
-         */
-        val canUseFullScreenIntent =
-            if (
-                Build.VERSION.SDK_INT >=
-                Build.VERSION_CODES.UPSIDE_DOWN_CAKE
-            ) {
-                notificationManager.canUseFullScreenIntent()
-            } else {
-                true
-            }
-
-        Log.d(
-            TAG,
-            "CAN USE FULL SCREEN INTENT: " +
-                    canUseFullScreenIntent
+        return NotificationCompat.Builder(
+            this,
+            CHANNEL_ID
         )
-
-        val notificationBuilder =
-            if (
-                Build.VERSION.SDK_INT >=
-                Build.VERSION_CODES.O
-            ) {
-
-                Notification.Builder(
-                    this,
-                    CHANNEL_ID
-                )
-
-            } else {
-
-                Notification.Builder(this)
-            }
-
-        notificationBuilder
             .setSmallIcon(
-                R.mipmap.ic_launcher
+                android.R.drawable.ic_lock_idle_alarm
             )
             .setContentTitle(
-                "حان الآن وقت $currentPrayerName"
+                "حان الآن موعد الأذان"
             )
             .setContentText(
-                "الأذان"
-            )
-            .setCategory(
-                Notification.CATEGORY_ALARM
+                "أذان $currentPrayerName"
             )
             .setPriority(
-                Notification.PRIORITY_MAX
+                NotificationCompat.PRIORITY_MAX
+            )
+            .setCategory(
+                NotificationCompat.CATEGORY_ALARM
+            )
+            .setOngoing(true)
+            .setAutoCancel(false)
+            .setContentIntent(
+                activityPendingIntent
+            )
+            .setFullScreenIntent(
+                activityPendingIntent,
+                true
             )
             .setVisibility(
-                Notification.VISIBILITY_PUBLIC
+                NotificationCompat.VISIBILITY_PUBLIC
             )
-            .setAutoCancel(false)
-            .setOngoing(true)
-
-        /*
-         * This is the important part.
-         *
-         * If Full Screen Intent permission is enabled,
-         * Android can launch AthanActivity immediately.
-         */
-        if (canUseFullScreenIntent) {
-
-            notificationBuilder.setFullScreenIntent(
-                fullScreenPendingIntent,
-                true
-            )
-
-            Log.d(
-                TAG,
-                "FULL SCREEN INTENT ATTACHED"
-            )
-
-        } else {
-
-            Log.w(
-                TAG,
-                "FULL SCREEN INTENT PERMISSION IS DISABLED"
-            )
-        }
-
-        val notification =
-            notificationBuilder.build()
-
-        if (
-            Build.VERSION.SDK_INT >=
-            Build.VERSION_CODES.Q
-        ) {
-
-            startForeground(
-                NOTIFICATION_ID,
-                notification,
-                ServiceInfo
-                    .FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
-            )
-
-        } else {
-
-            @Suppress("DEPRECATION")
-            startForeground(
-                NOTIFICATION_ID,
-                notification
-            )
-        }
-    }
-
-    // =========================================================
-    // PLAY ATHAN
-    // =========================================================
-
-    private fun playAthan() {
-
-        stopMediaPlayerOnly()
-
-        try {
-
-            mediaPlayer =
-                MediaPlayer.create(
-                    this,
-                    R.raw.azan
-                )
-
-            if (mediaPlayer == null) {
-
-                Log.e(
-                    TAG,
-                    "MEDIA PLAYER CREATION FAILED"
-                )
-
-                stopAthan()
-
-                return
-            }
-
-            mediaPlayer?.setOnCompletionListener {
-
-                Log.d(
-                    TAG,
-                    "ATHAN AUDIO FINISHED"
-                )
-
-                sendAthanFinished()
-
-                stopAthan()
-            }
-
-            mediaPlayer?.setOnErrorListener { _,
-                                              what,
-                                              extra ->
-
-                Log.e(
-                    TAG,
-                    "MEDIA PLAYER ERROR: " +
-                            "what=$what extra=$extra"
-                )
-
-                sendAthanFinished()
-
-                stopAthan()
-
-                true
-            }
-
-            mediaPlayer?.start()
-
-            Log.d(
-                TAG,
-                "ATHAN AUDIO STARTED"
-            )
-
-        } catch (e: Exception) {
-
-            Log.e(
-                TAG,
-                "ERROR PLAYING ATHAN",
-                e
-            )
-
-            stopAthan()
-        }
-    }
-
-    // =========================================================
-    // STOP ATHAN
-    // =========================================================
-
-    private fun stopAthan() {
-
-        stopMediaPlayerOnly()
-
-        try {
-
-            if (
-                Build.VERSION.SDK_INT >=
-                Build.VERSION_CODES.N
-            ) {
-
-                stopForeground(
-                    STOP_FOREGROUND_REMOVE
-                )
-
-            } else {
-
-                @Suppress("DEPRECATION")
-                stopForeground(true)
-            }
-
-        } catch (e: Exception) {
-
-            Log.e(
-                TAG,
-                "ERROR STOPPING FOREGROUND",
-                e
-            )
-        }
-
-        stopSelf()
-
-        Log.d(
-            TAG,
-            "ATHAN SERVICE STOPPED"
-        )
-    }
-
-    // =========================================================
-    // STOP MEDIA PLAYER ONLY
-    // =========================================================
-
-    private fun stopMediaPlayerOnly() {
-
-        try {
-
-            if (
-                mediaPlayer?.isPlaying == true
-            ) {
-                mediaPlayer?.stop()
-            }
-
-        } catch (_: Exception) {
-        }
-
-        try {
-
-            mediaPlayer?.release()
-
-        } catch (_: Exception) {
-        }
-
-        mediaPlayer = null
-    }
-
-    // =========================================================
-    // FINISHED BROADCAST
-    // =========================================================
-
-    private fun sendAthanFinished() {
-
-        val finishedIntent =
-            Intent(
-                ACTION_ATHAN_FINISHED
-            )
-
-        finishedIntent.setPackage(
-            packageName
-        )
-
-        finishedIntent.putExtra(
-            EXTRA_ATHAN_ID,
-            currentAthanId
-        )
-
-        sendBroadcast(
-            finishedIntent
-        )
+            .build()
     }
 
     // =========================================================
@@ -452,60 +240,140 @@ class AthanService : Service() {
     private fun createNotificationChannel() {
 
         if (
-            Build.VERSION.SDK_INT <
+            Build.VERSION.SDK_INT >=
             Build.VERSION_CODES.O
         ) {
-            return
+
+            val channel =
+                NotificationChannel(
+                    CHANNEL_ID,
+                    CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_HIGH
+                )
+
+            channel.description =
+                "Athan playback notification"
+
+            // Notification itself has no sound.
+            // The actual athan is played by MediaPlayer.
+            channel.setSound(
+                null,
+                null
+            )
+
+            channel.enableVibration(true)
+
+            val manager =
+                getSystemService(
+                    Context.NOTIFICATION_SERVICE
+                ) as NotificationManager
+
+            manager.createNotificationChannel(
+                channel
+            )
+        }
+    }
+
+    // =========================================================
+    // STOP MEDIA PLAYER
+    // =========================================================
+
+    private fun stopMediaPlayer() {
+
+        try {
+            mediaPlayer?.stop()
+        } catch (_: Exception) {
         }
 
-        val channel =
-            NotificationChannel(
-                CHANNEL_ID,
-                "أذان الصلاة",
-                NotificationManager.IMPORTANCE_HIGH
-            )
+        try {
+            mediaPlayer?.release()
+        } catch (_: Exception) {
+        }
 
-        channel.description =
-            "تشغيل الأذان في وقت الصلاة"
+        mediaPlayer = null
+    }
 
-        /*
-         * Audio itself comes from MediaPlayer.
-         * Therefore notification channel sound is disabled
-         * to prevent duplicate audio.
-         */
-        channel.setSound(
-            null,
-            null
+    // =========================================================
+    // STOP ATHAN
+    // =========================================================
+
+    private fun stopAthan() {
+
+        stopMediaPlayer()
+
+        val manager =
+            getSystemService(
+                Context.NOTIFICATION_SERVICE
+            ) as NotificationManager
+
+        manager.cancel(
+            NOTIFICATION_ID
         )
 
-        channel.enableVibration(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(
+                STOP_FOREGROUND_REMOVE
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
 
-        val notificationManager =
-            getSystemService(
-                NotificationManager::class.java
+        stopSelf()
+    }
+
+    // =========================================================
+    // ATHAN FINISHED
+    // =========================================================
+
+    private fun sendAthanFinished() {
+
+        val intent =
+            Intent(
+                ACTION_ATHAN_FINISHED
             )
 
-        notificationManager.createNotificationChannel(
-            channel
+        intent.setPackage(
+            packageName
+        )
+
+        intent.putExtra(
+            EXTRA_ATHAN_ID,
+            currentAthanId
+        )
+
+        sendBroadcast(
+            intent
         )
     }
+
+    // =========================================================
+    // ON DESTROY
+    // =========================================================
+
+    override fun onDestroy() {
+
+        stopMediaPlayer()
+
+        val manager =
+            getSystemService(
+                Context.NOTIFICATION_SERVICE
+            ) as NotificationManager
+
+        manager.cancel(
+            NOTIFICATION_ID
+        )
+
+        super.onDestroy()
+    }
+
+    // =========================================================
+    // ON BIND
+    // =========================================================
 
     override fun onBind(
         intent: Intent?
     ): IBinder? {
-
         return null
-    }
-
-    override fun onDestroy() {
-
-        Log.d(
-            TAG,
-            "ATHAN SERVICE DESTROYED"
-        )
-
-        stopMediaPlayerOnly()
-
-        super.onDestroy()
     }
 }
