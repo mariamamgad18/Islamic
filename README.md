@@ -71,7 +71,9 @@ ________________________________________________________________________________
 
 Azan :
 
-<img width="1080" height="552" alt="1" src="https://github.com/user-attachments/assets/0445e5ed-6c28-4463-b7d6-e0790baf11cd" />
+<img width="812" height="556" alt="image" src="https://github.com/user-attachments/assets/ee97ed28-abef-4308-9bd1-0201abf59e1e" />
+
+<img width="431" height="409" alt="image" src="https://github.com/user-attachments/assets/650c3199-17d8-45c1-a513-fc6d573bc45e" />
 
 _________________________________________________________________________________________________________________________________________________
 
