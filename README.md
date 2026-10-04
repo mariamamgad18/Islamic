@@ -46,7 +46,7 @@ ________________________________________________________________________________
 Home Screen
 
 
-<img width="854" height="672" alt="1" src="https://github.com/user-attachments/assets/1ef87278-65b0-4dd3-a2d9-1d8cd27a5bc4" />
+<img width="991" height="980" alt="1" src="https://github.com/user-attachments/assets/7aafd72b-5d24-424d-b085-f965ecbe5eee" />
 
 _________________________________________________________________________________________________________________________________________________
 
